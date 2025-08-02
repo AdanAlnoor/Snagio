@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  role            Role      @default(INSPECTOR)
+  company         String?
+  phone           String?
+  avatarUrl       String?   @map("avatar_url")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  createdProjects Project[]
+  assignedSnags   Snag[]    @relation("SnagAssignee")
+  createdSnags    Snag[]    @relation("SnagCreator")
+  comments        Comment[]
+  uploadedPhotos  SnagPhoto[]
+  statusChanges   StatusHistory[]
+  
+  @@map("users")
+}
+
+model Project {
+  id               String    @id @default(uuid())
+  code             String    @unique
+  name             String
+  description      String?
+  address          String
+  clientName       String    @map("client_name")
+  contractorName   String    @map("contractor_name")
+  startDate        DateTime  @map("start_date")
+  expectedEndDate  DateTime  @map("expected_end_date")
+  status           ProjectStatus @default(PLANNING)
+  createdById      String    @map("created_by_id")
+  createdBy        User      @relation(fields: [createdById], references: [id])
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  
+  // Customizable settings
+  settings         ProjectSettings?
+  categories       Category[]
+  
+  @@index([status])
+  @@index([createdById])
+  @@map("projects")
+}
+
+model ProjectSettings {
+  id              String    @id @default(uuid())
+  projectId       String    @unique @map("project_id")
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Customizable column headers
+  itemLabel       String    @default("Snag") @map("item_label") // e.g., "Snag", "Issue", "Defect"
+  numberLabel     String    @default("No.") @map("number_label")
+  locationLabel   String    @default("Location") @map("location_label")
+  photoLabel      String    @default("Photo") @map("photo_label")
+  descriptionLabel String   @default("Description") @map("description_label")
+  solutionLabel   String    @default("Solution") @map("solution_label")
+  statusLabel     String    @default("STATUS") @map("status_label")
+  
+  // Custom status options
+  customStatuses  Json?     @map("custom_statuses") // Array of {value, label, color}
+  
+  // Display preferences
+  photoSize       PhotoSize @default(LARGE) @map("photo_size")
+  rowsPerPage     Int       @default(5) @map("rows_per_page")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@map("project_settings")
+}
+
+model Category {
+  id               String    @id @default(uuid())
+  projectId        String    @map("project_id")
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name             String
+  code             String
+  description      String?
+  color            String    @default("#3B82F6")
+  icon             String    @default("FolderOpen")
+  orderIndex       Int       @default(0) @map("order_index")
+  parentCategoryId String?   @map("parent_category_id")
+  parentCategory   Category? @relation("CategoryTree", fields: [parentCategoryId], references: [id])
+  subCategories    Category[] @relation("CategoryTree")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  
+  snags            Snag[]
+  
+  @@unique([projectId, code])
+  @@index([projectId])
+  @@map("categories")
+}
+
+model Snag {
+  id              String    @id @default(uuid())
+  number          Int
+  categoryId      String    @map("category_id")
+  category        Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  location        String
+  description     String
+  solution        String?
+  status          SnagStatus @default(OPEN)
+  priority        Priority   @default(MEDIUM)
+  assignedToId    String?    @map("assigned_to_id")
+  assignedTo      User?      @relation("SnagAssignee", fields: [assignedToId], references: [id])
+  createdById     String     @map("created_by_id")
+  createdBy       User       @relation("SnagCreator", fields: [createdById], references: [id])
+  dueDate         DateTime?  @map("due_date")
+  completedDate   DateTime?  @map("completed_date")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  
+  photos          SnagPhoto[]
+  comments        Comment[]
+  statusHistory   StatusHistory[]
+  
+  @@unique([categoryId, number])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
+  @@map("snags")
+}
+
+model SnagPhoto {
+  id              String    @id @default(uuid())
+  snagId          String    @map("snag_id")
+  snag            Snag      @relation(fields: [snagId], references: [id], onDelete: Cascade)
+  url             String
+  thumbnailUrl    String    @map("thumbnail_url")
+  caption         String?
+  hasMarkup       Boolean   @default(false) @map("has_markup")
+  markupData      Json?     @map("markup_data") // Stores annotation data
+  uploadedById    String    @map("uploaded_by_id")
+  uploadedBy      User      @relation(fields: [uploadedById], references: [id])
+  uploadedAt      DateTime  @default(now()) @map("uploaded_at")
+  
+  @@index([snagId])
+  @@map("snag_photos")
+}
+
+model Comment {
+  id              String    @id @default(uuid())
+  snagId          String    @map("snag_id")
+  snag            Snag      @relation(fields: [snagId], references: [id], onDelete: Cascade)
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  content         String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  @@index([snagId])
+  @@map("comments")
+}
+
+model StatusHistory {
+  id              String    @id @default(uuid())
+  snagId          String    @map("snag_id")
+  snag            Snag      @relation(fields: [snagId], references: [id], onDelete: Cascade)
+  fromStatus      SnagStatus @map("from_status")
+  toStatus        SnagStatus @map("to_status")
+  changedById     String    @map("changed_by_id")
+  changedBy       User      @relation(fields: [changedById], references: [id])
+  reason          String?
+  changedAt       DateTime  @default(now()) @map("changed_at")
+  
+  @@index([snagId])
+  @@map("status_history")
+}
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+  INSPECTOR
+  CONTRACTOR
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+enum SnagStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_REVIEW
+  CLOSED
+  ON_HOLD
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PhotoSize {
+  SMALL    // 40mm x 30mm
+  MEDIUM   // 55mm x 40mm
+  LARGE    // 65mm x 45mm
+}
