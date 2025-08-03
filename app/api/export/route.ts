@@ -1,9 +1,9 @@
+import { format } from 'date-fns'
 import jsPDF from 'jspdf'
 import { type NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
 import { fetchImageAsBase64 } from '@/lib/utils/pdf-image'
-import { format } from 'date-fns'
 
 // A4 dimensions in mm
 const A4_WIDTH = 210
@@ -13,12 +13,12 @@ const CONTENT_WIDTH = A4_WIDTH - 2 * MARGIN
 
 // Column widths (total: 180mm)
 const COLUMNS = {
-  number: 10,      // 5.5%
-  location: 20,    // 11%
-  photo: 70,       // 38.9% - Critical requirement
+  number: 10, // 5.5%
+  location: 20, // 11%
+  photo: 70, // 38.9% - Critical requirement
   description: 35, // 19.5%
-  solution: 25,    // 14%
-  status: 20,      // 11%
+  solution: 25, // 14%
+  status: 20, // 11%
 }
 
 const PHOTO_HEIGHT = 45 // Reduced for more compact layout
@@ -106,11 +106,13 @@ export async function POST(request: NextRequest) {
     // Helper functions
     const hexToRgb = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : { r: 0, g: 0, b: 0 }
+      return result
+        ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+          }
+        : { r: 0, g: 0, b: 0 }
     }
 
     const setColor = (hex: string) => {
@@ -123,7 +125,13 @@ export async function POST(request: NextRequest) {
       pdf.setFillColor(rgb.r, rgb.g, rgb.b)
     }
 
-    const drawText = (text: string, x: number, y: number, maxWidth: number, maxLines: number = 3) => {
+    const drawText = (
+      text: string,
+      x: number,
+      y: number,
+      maxWidth: number,
+      maxLines: number = 3
+    ) => {
       const lines = pdf.splitTextToSize(text, maxWidth)
       const linesToDraw = lines.slice(0, maxLines)
       if (lines.length > maxLines) {
@@ -136,7 +144,7 @@ export async function POST(request: NextRequest) {
     // Add compact project header with background
     setFillColor(COLORS.primary)
     pdf.rect(0, 0, A4_WIDTH, 20, 'F')
-    
+
     pdf.setTextColor(255, 255, 255)
     pdf.setFontSize(16)
     pdf.setFont('helvetica', 'bold')
@@ -144,7 +152,9 @@ export async function POST(request: NextRequest) {
 
     pdf.setFontSize(10)
     pdf.setFont('helvetica', 'normal')
-    pdf.text(`Export Date: ${format(new Date(), 'MMMM d, yyyy')}`, A4_WIDTH - MARGIN, 12, { align: 'right' })
+    pdf.text(`Export Date: ${format(new Date(), 'MMMM d, yyyy')}`, A4_WIDTH - MARGIN, 12, {
+      align: 'right',
+    })
 
     let yPosition = 25
     let pageNumber = 1
@@ -166,12 +176,12 @@ export async function POST(request: NextRequest) {
       // Category bar
       setFillColor(COLORS.accent)
       pdf.rect(0, 20, A4_WIDTH, 15, 'F')
-      
+
       pdf.setTextColor(255, 255, 255)
       pdf.setFontSize(12)
       pdf.setFont('helvetica', 'bold')
       pdf.text(categoryName, MARGIN, 28)
-      
+
       yPosition = 40
     }
 
@@ -180,65 +190,79 @@ export async function POST(request: NextRequest) {
       // Header background
       setFillColor(COLORS.lightBg)
       pdf.rect(MARGIN, yPosition - 3, CONTENT_WIDTH, HEADER_HEIGHT - 2, 'F')
-      
+
       // Header border
       pdf.setDrawColor(200, 200, 200)
       pdf.setLineWidth(0.5)
-      pdf.line(MARGIN, yPosition + HEADER_HEIGHT - 5, MARGIN + CONTENT_WIDTH, yPosition + HEADER_HEIGHT - 5)
-      
+      pdf.line(
+        MARGIN,
+        yPosition + HEADER_HEIGHT - 5,
+        MARGIN + CONTENT_WIDTH,
+        yPosition + HEADER_HEIGHT - 5
+      )
+
       // Header text
       setColor(COLORS.primary)
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'bold')
-      
+
       let xPos = MARGIN
       pdf.text(labels.number, xPos + 2, yPosition)
       xPos += COLUMNS.number
-      
+
       pdf.text(labels.location, xPos + 2, yPosition)
       xPos += COLUMNS.location
-      
+
       pdf.text(labels.photo, xPos + 2, yPosition)
       xPos += COLUMNS.photo
-      
+
       pdf.text(labels.description, xPos + 2, yPosition)
       xPos += COLUMNS.description
-      
+
       pdf.text(labels.solution, xPos + 2, yPosition)
       xPos += COLUMNS.solution
-      
+
       pdf.text(labels.status, xPos + 2, yPosition)
-      
+
       yPosition += HEADER_HEIGHT - 2
     }
 
     // Helper function to get status color
     const getStatusColor = (status: string) => {
       switch (status) {
-        case 'OPEN': return COLORS.statusOpen
-        case 'IN_PROGRESS': return COLORS.statusInProgress
-        case 'PENDING_REVIEW': return COLORS.statusPending
-        case 'CLOSED': return COLORS.statusClosed
-        default: return COLORS.statusOnHold
+        case 'OPEN':
+          return COLORS.statusOpen
+        case 'IN_PROGRESS':
+          return COLORS.statusInProgress
+        case 'PENDING_REVIEW':
+          return COLORS.statusPending
+        case 'CLOSED':
+          return COLORS.statusClosed
+        default:
+          return COLORS.statusOnHold
       }
     }
 
     // Helper function to get priority color
     const getPriorityColor = (priority: string) => {
       switch (priority) {
-        case 'CRITICAL': return COLORS.priorityCritical
-        case 'HIGH': return COLORS.priorityHigh
-        case 'MEDIUM': return COLORS.priorityMedium
-        default: return COLORS.priorityLow
+        case 'CRITICAL':
+          return COLORS.priorityCritical
+        case 'HIGH':
+          return COLORS.priorityHigh
+        case 'MEDIUM':
+          return COLORS.priorityMedium
+        default:
+          return COLORS.priorityLow
       }
     }
 
     // Process each category
     for (const category of project.categories) {
       if (category.snags.length === 0) continue // Skip empty categories
-      
+
       currentCategory = category.name
-      
+
       // First category starts immediately
       if (pageNumber === 1 && yPosition === 25) {
         drawPageHeader(category.name)
@@ -259,7 +283,7 @@ export async function POST(request: NextRequest) {
           pdf.addPage()
           pageNumber++
           rowIndex = 0
-          
+
           // Redraw headers on new page
           drawPageHeader(category.name)
           drawTableHeader()
@@ -274,7 +298,12 @@ export async function POST(request: NextRequest) {
         // Row border
         pdf.setDrawColor(240, 240, 240)
         pdf.setLineWidth(0.2)
-        pdf.line(MARGIN, yPosition + ROW_MIN_HEIGHT - 5, MARGIN + CONTENT_WIDTH, yPosition + ROW_MIN_HEIGHT - 5)
+        pdf.line(
+          MARGIN,
+          yPosition + ROW_MIN_HEIGHT - 5,
+          MARGIN + CONTENT_WIDTH,
+          yPosition + ROW_MIN_HEIGHT - 5
+        )
 
         let xPos = MARGIN
         const textY = yPosition + 3
@@ -284,7 +313,7 @@ export async function POST(request: NextRequest) {
         pdf.setFontSize(10)
         pdf.setFont('helvetica', 'bold')
         pdf.text(snag.number.toString(), xPos + 2, textY)
-        
+
         // Priority dot
         if (snag.priority !== 'LOW') {
           const priorityColor = getPriorityColor(snag.priority)
@@ -311,7 +340,7 @@ export async function POST(request: NextRequest) {
               pdf.setDrawColor(200, 200, 200)
               pdf.setLineWidth(0.5)
               pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'S')
-              
+
               pdf.addImage(
                 imageData,
                 'JPEG',
@@ -328,10 +357,12 @@ export async function POST(request: NextRequest) {
               pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'F')
               pdf.setDrawColor(200, 200, 200)
               pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'S')
-              
+
               setColor(COLORS.secondary)
               pdf.setFontSize(8)
-              pdf.text('No Image', xPos + COLUMNS.photo / 2, yPosition + PHOTO_HEIGHT / 2, { align: 'center' })
+              pdf.text('No Image', xPos + COLUMNS.photo / 2, yPosition + PHOTO_HEIGHT / 2, {
+                align: 'center',
+              })
             }
           } catch (error) {
             console.error('Error adding photo:', error)
@@ -339,10 +370,12 @@ export async function POST(request: NextRequest) {
             pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'F')
             pdf.setDrawColor(200, 200, 200)
             pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'S')
-            
+
             setColor(COLORS.secondary)
             pdf.setFontSize(8)
-            pdf.text('Error', xPos + COLUMNS.photo / 2, yPosition + PHOTO_HEIGHT / 2, { align: 'center' })
+            pdf.text('Error', xPos + COLUMNS.photo / 2, yPosition + PHOTO_HEIGHT / 2, {
+              align: 'center',
+            })
           }
         } else {
           // No photo placeholder
@@ -350,10 +383,12 @@ export async function POST(request: NextRequest) {
           pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'F')
           pdf.setDrawColor(200, 200, 200)
           pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'S')
-          
+
           setColor(COLORS.secondary)
           pdf.setFontSize(8)
-          pdf.text('No Photo', xPos + COLUMNS.photo / 2, yPosition + PHOTO_HEIGHT / 2, { align: 'center' })
+          pdf.text('No Photo', xPos + COLUMNS.photo / 2, yPosition + PHOTO_HEIGHT / 2, {
+            align: 'center',
+          })
         }
         xPos += COLUMNS.photo
 
@@ -361,19 +396,19 @@ export async function POST(request: NextRequest) {
         setColor(COLORS.primary)
         pdf.setFontSize(9)
         drawText(snag.description, xPos + 2, textY, COLUMNS.description - 4, 8)
-        
+
         // Add assigned to and due date info below description if present
         if (snag.assignedTo || snag.dueDate) {
           let infoY = textY + 15
           setColor(COLORS.secondary)
           pdf.setFontSize(7)
-          
+
           if (snag.assignedTo) {
             const name = `${snag.assignedTo.firstName} ${snag.assignedTo.lastName}`.trim()
             pdf.text(`${name}`, xPos + 2, infoY)
             infoY += 3
           }
-          
+
           if (snag.dueDate) {
             pdf.text(`${format(new Date(snag.dueDate), 'MMM d')}`, xPos + 2, infoY)
           }
@@ -389,21 +424,24 @@ export async function POST(request: NextRequest) {
         // Status column with colored badge
         const statusColor = getStatusColor(snag.status)
         const statusRgb = hexToRgb(statusColor)
-        
+
         // Status background - light version of the color
         pdf.setFillColor(
           Math.min(255, statusRgb.r + 200),
           Math.min(255, statusRgb.g + 200),
           Math.min(255, statusRgb.b + 200)
         )
-        const statusText = snag.status === 'IN_PROGRESS' ? 'IN PROG.' : 
-                          snag.status === 'PENDING_REVIEW' ? 'REVIEW' : 
-                          snag.status.replace(/_/g, ' ')
+        const statusText =
+          snag.status === 'IN_PROGRESS'
+            ? 'IN PROG.'
+            : snag.status === 'PENDING_REVIEW'
+              ? 'REVIEW'
+              : snag.status.replace(/_/g, ' ')
         const statusWidth = pdf.getTextWidth(statusText) + 4
-        
+
         // Draw simple rectangle for status badge
         pdf.rect(xPos + 2, textY - 3, statusWidth, 6, 'F')
-        
+
         // Status text
         pdf.setTextColor(statusRgb.r, statusRgb.g, statusRgb.b)
         pdf.setFontSize(8)
@@ -419,24 +457,26 @@ export async function POST(request: NextRequest) {
     const totalPages = pdf.internal.pages.length - 1
     for (let i = 1; i <= totalPages; i++) {
       pdf.setPage(i)
-      
+
       // Footer line
       pdf.setDrawColor(200, 200, 200)
       pdf.setLineWidth(0.3)
       pdf.line(MARGIN, A4_HEIGHT - 15, A4_WIDTH - MARGIN, A4_HEIGHT - 15)
-      
+
       // Page number
       setColor(COLORS.secondary)
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'normal')
       pdf.text(`Page ${i} of ${totalPages}`, A4_WIDTH / 2, A4_HEIGHT - 10, { align: 'center' })
-      
+
       // Project info on left
       pdf.setFontSize(8)
       pdf.text(project.code, MARGIN, A4_HEIGHT - 10)
-      
+
       // Date on right
-      pdf.text(format(new Date(), 'yyyy-MM-dd'), A4_WIDTH - MARGIN, A4_HEIGHT - 10, { align: 'right' })
+      pdf.text(format(new Date(), 'yyyy-MM-dd'), A4_WIDTH - MARGIN, A4_HEIGHT - 10, {
+        align: 'right',
+      })
     }
 
     // Generate PDF as base64

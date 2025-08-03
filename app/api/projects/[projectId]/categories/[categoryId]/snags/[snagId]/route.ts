@@ -11,11 +11,15 @@ const updateSnagSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   assignedToId: z.string().uuid().nullable().optional(),
   dueDate: z.string().datetime().nullable().optional(),
-  photos: z.array(z.object({
-    id: z.string(),
-    url: z.string(),
-    thumbnailUrl: z.string(),
-  })).optional(),
+  photos: z
+    .array(
+      z.object({
+        id: z.string(),
+        url: z.string(),
+        thumbnailUrl: z.string(),
+      })
+    )
+    .optional(),
 })
 
 export async function GET(
@@ -294,7 +298,7 @@ export async function DELETE(
     }
 
     // Use a transaction to ensure atomicity
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Verify user owns the project and get the snag number
       const snag = await tx.snag.findFirst({
         where: {

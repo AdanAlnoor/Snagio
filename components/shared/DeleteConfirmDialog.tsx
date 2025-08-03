@@ -41,17 +41,21 @@ export function DeleteConfirmDialog({
             <AlertDialogTitle>Delete {itemType}?</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="pt-2 pl-[52px]">
-            Are you sure you want to delete {itemIdentifier ? (
+            Are you sure you want to delete{' '}
+            {itemIdentifier ? (
               <>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{itemType} #{itemIdentifier}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {itemType} #{itemIdentifier}
+                </span>
               </>
             ) : (
               `this ${itemType}`
-            )}? This action cannot be undone.
+            )}
+            ? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="pt-6">
-          <AlertDialogCancel 
+          <AlertDialogCancel
             disabled={isDeleting}
             className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
           >

@@ -16,11 +16,17 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -28,21 +34,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
-import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToast } from '@/hooks/use-toast'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 interface SnagTableInlineProps {
   snags: Array<{
@@ -104,22 +99,22 @@ const priorityIcons = {
 const getTimeAgo = (date: Date): string => {
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-  
+
   if (diffInSeconds < 60) return 'just now'
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
-  
+
   return format(date, 'MMM d')
 }
 
-export function SnagTableInline({ 
-  snags, 
-  projectId, 
-  categoryId, 
+export function SnagTableInline({
+  snags,
+  projectId,
+  categoryId,
   settings,
   onStatusClick,
-  onCommentClick
+  onCommentClick,
 }: SnagTableInlineProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -270,15 +265,9 @@ export function SnagTableInline({
         {snags.map((snag, index) => {
           const isEditing = editingId === snag.id
           const isFirstImage = index === 0 && snag.photos.length > 0
-          
+
           return (
-            <div
-              key={snag.id}
-              className={cn(
-                'group',
-                index !== snags.length - 1 && 'border-b'
-              )}
-            >
+            <div key={snag.id} className={cn('group', index !== snags.length - 1 && 'border-b')}>
               {/* Main row */}
               <div
                 className={cn(
@@ -286,277 +275,281 @@ export function SnagTableInline({
                   isEditing && 'bg-muted/30'
                 )}
               >
-              {/* Number */}
-              <div className="w-[6%] flex-shrink-0 pr-4">
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">{snag.number}</span>
+                {/* Number */}
+                <div className="w-[6%] flex-shrink-0 pr-4">
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">{snag.number}</span>
+                    {isEditing ? (
+                      <Select
+                        value={editData?.priority}
+                        onValueChange={value => setEditData({ ...editData!, priority: value })}
+                      >
+                        <SelectTrigger className="h-6 w-12 p-0 border-0 focus:ring-0">
+                          <SelectValue>
+                            {priorityIcons[editData?.priority as keyof typeof priorityIcons]}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="LOW">Low</SelectItem>
+                          <SelectItem value="MEDIUM">Medium</SelectItem>
+                          <SelectItem value="HIGH">High</SelectItem>
+                          <SelectItem value="CRITICAL">Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      priorityIcons[snag.priority as keyof typeof priorityIcons]
+                    )}
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="w-[12%] flex-shrink-0 pr-4">
                   {isEditing ? (
-                    <Select
-                      value={editData?.priority}
-                      onValueChange={(value) => setEditData({ ...editData!, priority: value })}
-                    >
-                      <SelectTrigger className="h-6 w-12 p-0 border-0 focus:ring-0">
-                        <SelectValue>
-                          {priorityIcons[editData?.priority as keyof typeof priorityIcons]}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="LOW">Low</SelectItem>
-                        <SelectItem value="MEDIUM">Medium</SelectItem>
-                        <SelectItem value="HIGH">High</SelectItem>
-                        <SelectItem value="CRITICAL">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      value={editData?.location}
+                      onChange={e => setEditData({ ...editData!, location: e.target.value })}
+                      className="h-8 text-sm"
+                    />
                   ) : (
-                    priorityIcons[snag.priority as keyof typeof priorityIcons]
-                  )}
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="w-[12%] flex-shrink-0 pr-4">
-                {isEditing ? (
-                  <Input
-                    value={editData?.location}
-                    onChange={(e) => setEditData({ ...editData!, location: e.target.value })}
-                    className="h-8 text-sm"
-                  />
-                ) : (
-                  <div className="flex items-start gap-1">
-                    <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                    <span className="text-sm break-words">{snag.location}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Photo - Not editable inline */}
-              <div className="w-[35%] flex-shrink-0 pr-4">
-                <div className="relative group">
-                  {snag.photos.length > 0 ? (
-                    <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border">
-                      <Image
-                        src={snag.photos[0].thumbnailUrl || snag.photos[0].url}
-                        alt={`${settings.itemLabel} ${snag.number}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 30vw"
-                        priority={isFirstImage}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full aspect-[4/3] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 flex items-center justify-center">
-                      <Camera className="h-8 w-8 text-muted-foreground/50" />
+                    <div className="flex items-start gap-1">
+                      <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span className="text-sm break-words">{snag.location}</span>
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Right side content - Description, Solution, Status, Actions */}
-              <div className="flex-1 flex">
-                <div className="w-full">
-                  {/* Top row - Main content */}
-                  <div className="flex">
-                    {/* Description */}
-                    <div className="w-[42%] flex-shrink-0 pr-4">
-                      {isEditing ? (
-                        <Textarea
-                          value={editData?.description}
-                          onChange={(e) => setEditData({ ...editData!, description: e.target.value })}
-                          className="min-h-[80px] text-sm resize-none"
+                {/* Photo - Not editable inline */}
+                <div className="w-[35%] flex-shrink-0 pr-4">
+                  <div className="relative group">
+                    {snag.photos.length > 0 ? (
+                      <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border">
+                        <Image
+                          src={snag.photos[0].thumbnailUrl || snag.photos[0].url}
+                          alt={`${settings.itemLabel} ${snag.number}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 30vw"
+                          priority={isFirstImage}
                         />
-                      ) : (
-                        <>
-                          <p className="text-sm line-clamp-3 break-words">{snag.description}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            {snag.assignedTo && (
-                              <div className="flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                <span className="truncate">
-                                  {snag.assignedTo.firstName} {snag.assignedTo.lastName}
-                                </span>
-                              </div>
-                            )}
-                            {snag.dueDate && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {format(new Date(snag.dueDate), 'MMM d')}
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Solution */}
-                    <div className="w-[25%] flex-shrink-0 pr-4">
-                      {isEditing ? (
-                        <Textarea
-                          value={editData?.solution}
-                          onChange={(e) => setEditData({ ...editData!, solution: e.target.value })}
-                          placeholder="Enter solution..."
-                          className="min-h-[80px] text-sm resize-none"
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground break-words">{snag.solution || '-'}</p>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="w-[22%] flex-shrink-0 pr-4">
-                      {isEditing ? (
-                        <Select
-                          value={editData?.status}
-                          onValueChange={(value) => setEditData({ ...editData!, status: value })}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OPEN">Open</SelectItem>
-                            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                            <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
-                            <SelectItem value="CLOSED">Closed</SelectItem>
-                            <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          className="p-0 h-auto w-full hover:bg-transparent"
-                          onClick={() => onStatusClick?.(snag)}
-                        >
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              'text-[10px] w-full justify-center px-1 cursor-pointer hover:opacity-80',
-                              statusColors[snag.status as keyof typeof statusColors]
-                            )}
-                          >
-                            {snag.status === 'IN_PROGRESS' ? 'IN PROG.' : snag.status === 'PENDING_REVIEW' ? 'REVIEW' : snag.status.replace(/_/g, ' ')}
-                          </Badge>
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="w-[11%] flex-shrink-0 flex items-center justify-center">
-                      {isEditing ? (
-                        <div className="flex gap-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={handleSaveEdit}
-                                  disabled={saving}
-                                >
-                                  <Check className="h-4 w-4 text-green-600" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Save (Ctrl+Enter)</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={handleCancelEdit}
-                                  disabled={saving}
-                                >
-                                  <X className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Cancel (Esc)</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      ) : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleEditClick(snag)}
-                            >
-                              <Edit2 className="h-4 w-4 mr-2" />
-                              Edit Inline
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem
-                              onClick={() => onCommentClick?.(snag)}
-                            >
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              Comments
-                              {snag._count?.comments ? (
-                                <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
-                                  {snag._count.comments}
-                                </span>
-                              ) : null}
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteClick(snag)}
-                              disabled={deletingId === snag.id}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-[4/3] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 flex items-center justify-center">
+                        <Camera className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Comments section below main content */}
-                  {snag.comments && snag.comments.length > 0 && (
-                    <div className="mt-3 border border-purple-200 rounded-md p-2 bg-purple-50/30">
-                      <h4 className="text-[11px] font-semibold text-purple-700 mb-1">Comments</h4>
-                      <div className="space-y-1">
-                        {snag.comments.map((comment) => {
-                          const author = comment.user.firstName && comment.user.lastName
-                            ? `${comment.user.firstName} ${comment.user.lastName}`
-                            : comment.user.email.split('@')[0]
-                          
-                          const timeAgo = getTimeAgo(new Date(comment.createdAt))
-                          
-                          return (
-                            <div key={comment.id} className="text-[10px] text-gray-600 leading-tight">
-                              <span className="font-medium text-gray-700">{author}</span>
-                              <span className="mx-0.5 text-gray-400">•</span>
-                              <span className="text-[9px] text-gray-500">{timeAgo}</span>
-                              <span className="text-gray-400">:</span>
-                              <span className="ml-1">{comment.content}</span>
+                {/* Right side content - Description, Solution, Status, Actions */}
+                <div className="flex-1 flex">
+                  <div className="w-full">
+                    {/* Top row - Main content */}
+                    <div className="flex">
+                      {/* Description */}
+                      <div className="w-[42%] flex-shrink-0 pr-4">
+                        {isEditing ? (
+                          <Textarea
+                            value={editData?.description}
+                            onChange={e =>
+                              setEditData({ ...editData!, description: e.target.value })
+                            }
+                            className="min-h-[80px] text-sm resize-none"
+                          />
+                        ) : (
+                          <>
+                            <p className="text-sm line-clamp-3 break-words">{snag.description}</p>
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              {snag.assignedTo && (
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  <span className="truncate">
+                                    {snag.assignedTo.firstName} {snag.assignedTo.lastName}
+                                  </span>
+                                </div>
+                              )}
+                              {snag.dueDate && (
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {format(new Date(snag.dueDate), 'MMM d')}
+                                </div>
+                              )}
                             </div>
-                          )
-                        })}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Solution */}
+                      <div className="w-[25%] flex-shrink-0 pr-4">
+                        {isEditing ? (
+                          <Textarea
+                            value={editData?.solution}
+                            onChange={e => setEditData({ ...editData!, solution: e.target.value })}
+                            placeholder="Enter solution..."
+                            className="min-h-[80px] text-sm resize-none"
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground break-words">
+                            {snag.solution || '-'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Status */}
+                      <div className="w-[22%] flex-shrink-0 pr-4">
+                        {isEditing ? (
+                          <Select
+                            value={editData?.status}
+                            onValueChange={value => setEditData({ ...editData!, status: value })}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="OPEN">Open</SelectItem>
+                              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                              <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
+                              <SelectItem value="CLOSED">Closed</SelectItem>
+                              <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            className="p-0 h-auto w-full hover:bg-transparent"
+                            onClick={() => onStatusClick?.(snag)}
+                          >
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px] w-full justify-center px-1 cursor-pointer hover:opacity-80',
+                                statusColors[snag.status as keyof typeof statusColors]
+                              )}
+                            >
+                              {snag.status === 'IN_PROGRESS'
+                                ? 'IN PROG.'
+                                : snag.status === 'PENDING_REVIEW'
+                                  ? 'REVIEW'
+                                  : snag.status.replace(/_/g, ' ')}
+                            </Badge>
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="w-[11%] flex-shrink-0 flex items-center justify-center">
+                        {isEditing ? (
+                          <div className="flex gap-1">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={handleSaveEdit}
+                                    disabled={saving}
+                                  >
+                                    <Check className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Save (Ctrl+Enter)</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={handleCancelEdit}
+                                    disabled={saving}
+                                  >
+                                    <X className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Cancel (Esc)</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(snag)}>
+                                <Edit2 className="h-4 w-4 mr-2" />
+                                Edit Inline
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem onClick={() => onCommentClick?.(snag)}>
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Comments
+                                {snag._count?.comments ? (
+                                  <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                                    {snag._count.comments}
+                                  </span>
+                                ) : null}
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteClick(snag)}
+                                disabled={deletingId === snag.id}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
-                  )}
+
+                    {/* Comments section below main content */}
+                    {snag.comments && snag.comments.length > 0 && (
+                      <div className="mt-3 border border-purple-200 rounded-md p-2 bg-purple-50/30">
+                        <h4 className="text-[11px] font-semibold text-purple-700 mb-1">Comments</h4>
+                        <div className="space-y-1">
+                          {snag.comments.map(comment => {
+                            const author =
+                              comment.user.firstName && comment.user.lastName
+                                ? `${comment.user.firstName} ${comment.user.lastName}`
+                                : comment.user.email.split('@')[0]
+
+                            const timeAgo = getTimeAgo(new Date(comment.createdAt))
+
+                            return (
+                              <div
+                                key={comment.id}
+                                className="text-[10px] text-gray-600 leading-tight"
+                              >
+                                <span className="font-medium text-gray-700">{author}</span>
+                                <span className="mx-0.5 text-gray-400">•</span>
+                                <span className="text-[9px] text-gray-500">{timeAgo}</span>
+                                <span className="text-gray-400">:</span>
+                                <span className="ml-1">{comment.content}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           )
         })}
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         open={deleteDialogOpen}

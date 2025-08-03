@@ -78,6 +78,15 @@ body {
   min-height: calc(100vh - 4rem);
 }
 
+/* Safe area padding for mobile devices */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
 .photo-table-width {
   width: 70mm;
 }

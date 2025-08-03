@@ -1,7 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { Loader2, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -10,13 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { Loader2, Settings } from 'lucide-react'
 
 interface StatusModalProps {
   snag: {
@@ -46,13 +46,7 @@ const statusTransitions: Record<string, string[]> = {
   CLOSED: ['OPEN'],
 }
 
-export function StatusModal({
-  snag,
-  projectId,
-  categoryId,
-  open,
-  onOpenChange,
-}: StatusModalProps) {
+export function StatusModal({ snag, projectId, categoryId, open, onOpenChange }: StatusModalProps) {
   const router = useRouter()
   const [selectedStatus, setSelectedStatus] = useState<string>('')
   const [reason, setReason] = useState('')
@@ -106,11 +100,9 @@ export function StatusModal({
             </div>
             <DialogTitle>Update Status - Snag #{snag.number}</DialogTitle>
           </div>
-          <DialogDescription className="pt-2 pl-[52px]">
-            Current status:
-          </DialogDescription>
+          <DialogDescription className="pt-2 pl-[52px]">Current status:</DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex items-center gap-2 pb-2">
           <span className="text-sm text-muted-foreground">Status:</span>
           <Badge
@@ -154,9 +146,9 @@ export function StatusModal({
         </div>
 
         <DialogFooter className="pt-6">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)} 
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
             disabled={loading}
             className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
           >

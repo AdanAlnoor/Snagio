@@ -34,9 +34,9 @@ export function PhotoUploader({
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return
-      
+
       const file = acceptedFiles[0] // Only take the first file
-      
+
       // Create preview URL
       const preview = URL.createObjectURL(file)
       setPreviewUrl(preview)
@@ -156,9 +156,7 @@ export function PhotoUploader({
               <>
                 <Camera className="h-8 w-8 text-muted-foreground" />
                 <p className="text-sm font-medium">Drag & drop a photo here, or click to select</p>
-                <p className="text-xs text-muted-foreground">
-                  JPEG, PNG, GIF, WebP • Max 10MB
-                </p>
+                <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP • Max 10MB</p>
               </>
             )}
           </div>

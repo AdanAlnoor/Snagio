@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { DashboardNav } from '@/components/layout/dashboard-nav'
+import { ResponsiveLayout } from '@/components/layout/responsive-layout'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -46,10 +46,5 @@ export default async function DashboardLayout({ children }: { children: React.Re
     email: user.email || '',
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <DashboardNav user={userData} />
-      <main className="pt-16">{children}</main>
-    </div>
-  )
+  return <ResponsiveLayout user={userData}>{children}</ResponsiveLayout>
 }

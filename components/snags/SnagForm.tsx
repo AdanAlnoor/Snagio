@@ -60,7 +60,8 @@ interface SnagFormProps {
 interface Photo {
   id: string
   url: string
-  thumbnailUrl: string
+  thumbnailUrl?: string
+  caption?: string
 }
 
 export function SnagForm({
@@ -98,15 +99,19 @@ export function SnagForm({
         ...data,
         assignedToId: data.assignedToId || null,
         dueDate: data.dueDate?.toISOString(),
-        photos: uploadedPhoto ? [{
-          id: uploadedPhoto.id,
-          url: uploadedPhoto.url,
-          thumbnailUrl: uploadedPhoto.thumbnailUrl,
-        }] : [],
+        photos: uploadedPhoto
+          ? [
+              {
+                id: uploadedPhoto.id,
+                url: uploadedPhoto.url,
+                thumbnailUrl: uploadedPhoto.thumbnailUrl,
+              },
+            ]
+          : [],
       }
-      
+
       console.log('Sending snag payload:', payload)
-      
+
       const response = await fetch(url, {
         method: snagId ? 'PUT' : 'POST',
         headers: {

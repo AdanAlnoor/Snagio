@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { SnagCard } from '@/components/mobile/SnagCard'
+import { useIsMobile } from '@/hooks/use-media-query'
+import { CommentsModal } from './CommentsModal'
 import { SnagTableInline } from './SnagTableInline'
 import { StatusModal } from './StatusModal'
-import { CommentsModal } from './CommentsModal'
 
 interface SnagListWrapperProps {
   snags: Array<{
@@ -37,7 +40,7 @@ interface SnagListWrapperProps {
         email: string
       }
     }>
-    _count?: {
+    _count: {
       comments: number
     }
   }>
@@ -54,32 +57,110 @@ export function SnagListWrapper({
   settings,
   teamMembers = [],
 }: SnagListWrapperProps) {
+  const isMobile = useIsMobile()
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
   // Modal states
   const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [commentsModalOpen, setCommentsModalOpen] = useState(false)
   const [selectedSnag, setSelectedSnag] = useState<any>(null)
-  
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const handleStatusClick = (snag: any) => {
     setSelectedSnag(snag)
     setStatusModalOpen(true)
   }
-  
+
   const handleCommentClick = (snag: any) => {
     setSelectedSnag(snag)
     setCommentsModalOpen(true)
   }
 
+  const handleDelete = () => {
+    router.refresh()
+  }
+
+  // During SSR, render desktop view by default to prevent hydration mismatch
+  // Use CSS to show/hide appropriate view
+  if (!mounted) {
+    return (
+      <>
+        {/* Mobile view - hidden on desktop */}
+        <div className="grid gap-4 lg:hidden">
+          {snags.map(snag => (
+            <SnagCard
+              key={snag.id}
+              snag={snag}
+              projectId={projectId}
+              categoryId={categoryId}
+              onDelete={handleDelete}
+              onStatusChange={() => router.refresh()}
+            />
+          ))}
+        </div>
+        
+        {/* Desktop view - hidden on mobile */}
+        <div className="hidden lg:block">
+          <SnagTableInline
+            snags={snags}
+            projectId={projectId}
+            categoryId={categoryId}
+            settings={settings}
+            onStatusClick={handleStatusClick}
+            onCommentClick={handleCommentClick}
+          />
+        </div>
+
+        {/* Modals */}
+        <StatusModal
+          snag={selectedSnag}
+          projectId={projectId}
+          categoryId={categoryId}
+          open={statusModalOpen}
+          onOpenChange={setStatusModalOpen}
+        />
+
+        <CommentsModal
+          snag={selectedSnag}
+          open={commentsModalOpen}
+          onOpenChange={setCommentsModalOpen}
+        />
+      </>
+    )
+  }
+
   return (
     <>
-      <SnagTableInline
-        snags={snags}
-        projectId={projectId}
-        categoryId={categoryId}
-        settings={settings}
-        onStatusClick={handleStatusClick}
-        onCommentClick={handleCommentClick}
-      />
-      
+      {isMobile ? (
+        // Mobile view - Card layout
+        <div className="grid gap-4">
+          {snags.map(snag => (
+            <SnagCard
+              key={snag.id}
+              snag={snag}
+              projectId={projectId}
+              categoryId={categoryId}
+              onDelete={handleDelete}
+              onStatusChange={() => router.refresh()}
+            />
+          ))}
+        </div>
+      ) : (
+        // Desktop view - Table layout
+        <SnagTableInline
+          snags={snags}
+          projectId={projectId}
+          categoryId={categoryId}
+          settings={settings}
+          onStatusClick={handleStatusClick}
+          onCommentClick={handleCommentClick}
+        />
+      )}
+
       {/* Modals */}
       <StatusModal
         snag={selectedSnag}
@@ -88,7 +169,7 @@ export function SnagListWrapper({
         open={statusModalOpen}
         onOpenChange={setStatusModalOpen}
       />
-      
+
       <CommentsModal
         snag={selectedSnag}
         open={commentsModalOpen}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Download, Loader2, FileDown } from 'lucide-react'
+import { Download, FileDown, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -144,9 +144,9 @@ export function ExportButton({ projectId, categories = [] }: ExportButtonProps) 
         </div>
 
         <DialogFooter className="pt-6">
-          <Button 
-            variant="outline" 
-            onClick={() => setOpen(false)} 
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
             disabled={exporting}
             className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
           >

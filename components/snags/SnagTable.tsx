@@ -16,6 +16,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -26,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 
 interface SnagTableProps {
   snags: Array<{
@@ -75,13 +75,13 @@ const priorityIcons = {
   CRITICAL: <AlertCircle className="h-3 w-3 text-red-600" />,
 }
 
-export function SnagTable({ 
-  snags, 
-  projectId, 
-  categoryId, 
+export function SnagTable({
+  snags,
+  projectId,
+  categoryId,
   settings,
   onStatusClick,
-  onCommentClick
+  onCommentClick,
 }: SnagTableProps) {
   const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -225,7 +225,11 @@ export function SnagTable({
                     statusColors[snag.status as keyof typeof statusColors]
                   )}
                 >
-                  {snag.status === 'IN_PROGRESS' ? 'IN PROG.' : snag.status === 'PENDING_REVIEW' ? 'REVIEW' : snag.status.replace(/_/g, ' ')}
+                  {snag.status === 'IN_PROGRESS'
+                    ? 'IN PROG.'
+                    : snag.status === 'PENDING_REVIEW'
+                      ? 'REVIEW'
+                      : snag.status.replace(/_/g, ' ')}
                 </Badge>
               </Button>
             </div>
@@ -234,25 +238,23 @@ export function SnagTable({
             <div className="w-[5%] flex-shrink-0 flex items-center justify-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={() => router.push(`/projects/${projectId}/categories/${categoryId}/snags/${snag.id}/edit`)}
+                    onClick={() =>
+                      router.push(
+                        `/projects/${projectId}/categories/${categoryId}/snags/${snag.id}/edit`
+                      )
+                    }
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
-                  
-                  <DropdownMenuItem
-                    onClick={() => onCommentClick?.(snag)}
-                  >
+
+                  <DropdownMenuItem onClick={() => onCommentClick?.(snag)}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Comments
                     {snag._count?.comments ? (
@@ -261,7 +263,7 @@ export function SnagTable({
                       </span>
                     ) : null}
                   </DropdownMenuItem>
-                  
+
                   <DropdownMenuItem
                     onClick={() => handleDeleteClick(snag)}
                     disabled={deletingId === snag.id}
@@ -276,7 +278,7 @@ export function SnagTable({
           </div>
         ))}
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         open={deleteDialogOpen}

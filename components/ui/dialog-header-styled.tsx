@@ -1,6 +1,6 @@
-import { LucideIcon } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 interface DialogHeaderStyledProps {
   icon: LucideIcon
@@ -50,7 +50,12 @@ export function DialogHeaderStyled({
   return (
     <DialogHeader className={className}>
       <div className="flex items-center gap-3">
-        <div className={cn('flex h-10 w-10 items-center justify-center rounded-full', styles.container)}>
+        <div
+          className={cn(
+            'flex h-10 w-10 items-center justify-center rounded-full',
+            styles.container
+          )}
+        >
           <Icon className={cn('h-5 w-5', styles.icon)} />
         </div>
         <DialogTitle>{title}</DialogTitle>

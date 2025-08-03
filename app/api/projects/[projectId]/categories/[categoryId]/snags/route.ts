@@ -10,11 +10,15 @@ const createSnagSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
   assignedToId: z.string().uuid().optional().nullable(),
   dueDate: z.string().datetime().optional(),
-  photos: z.array(z.object({
-    id: z.string(),
-    url: z.string(),
-    thumbnailUrl: z.string(),
-  })).optional(),
+  photos: z
+    .array(
+      z.object({
+        id: z.string(),
+        url: z.string(),
+        thumbnailUrl: z.string(),
+      })
+    )
+    .optional(),
 })
 
 export async function GET(
@@ -176,7 +180,9 @@ export async function POST(
       })
     } catch (dbError) {
       console.error('Database error creating snag:', dbError)
-      throw new Error(`Database error: ${dbError instanceof Error ? dbError.message : 'Unknown database error'}`)
+      throw new Error(
+        `Database error: ${dbError instanceof Error ? dbError.message : 'Unknown database error'}`
+      )
     }
 
     // Create photo records if provided
@@ -195,7 +201,9 @@ export async function POST(
       } catch (photoError) {
         console.error('Database error creating photos:', photoError)
         console.error('Photo data:', photos)
-        throw new Error(`Photo creation error: ${photoError instanceof Error ? photoError.message : 'Unknown photo error'}`)
+        throw new Error(
+          `Photo creation error: ${photoError instanceof Error ? photoError.message : 'Unknown photo error'}`
+        )
       }
 
       // Fetch the snag again with photos
