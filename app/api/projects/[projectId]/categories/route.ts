@@ -12,10 +12,11 @@ const createCategorySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -25,7 +26,7 @@ export async function GET(
     // Verify user owns the project
     const project = await prisma.project.findFirst({
       where: {
-        id: params.projectId,
+        id: awaitedParams.projectId,
         createdById: user.id,
       },
     })
@@ -37,7 +38,7 @@ export async function GET(
     // Fetch categories with snag counts
     const categories = await prisma.category.findMany({
       where: {
-        projectId: params.projectId,
+        projectId: awaitedParams.projectId,
       },
       include: {
         _count: {
@@ -91,10 +92,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -104,7 +106,7 @@ export async function POST(
     // Verify user owns the project
     const project = await prisma.project.findFirst({
       where: {
-        id: params.projectId,
+        id: awaitedParams.projectId,
         createdById: user.id,
       },
     })
@@ -118,7 +120,7 @@ export async function POST(
 
     // Get the highest orderIndex
     const lastCategory = await prisma.category.findFirst({
-      where: { projectId: params.projectId },
+      where: { projectId: awaitedParams.projectId },
       orderBy: { orderIndex: 'desc' },
     })
 
@@ -137,7 +139,7 @@ export async function POST(
       data: {
         ...validatedData,
         code,
-        projectId: params.projectId,
+        projectId: awaitedParams.projectId,
         orderIndex,
       },
       include: {
@@ -157,7 +159,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       )
     }

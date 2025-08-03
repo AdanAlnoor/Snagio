@@ -13,10 +13,11 @@ const updateCategorySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -25,9 +26,9 @@ export async function GET(
 
     const category = await prisma.category.findFirst({
       where: {
-        id: params.categoryId,
+        id: awaitedParams.categoryId,
         project: {
-          id: params.projectId,
+          id: awaitedParams.projectId,
           createdById: user.id,
         },
       },
@@ -78,10 +79,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -94,9 +96,9 @@ export async function PUT(
     // Verify user owns the category
     const category = await prisma.category.findFirst({
       where: {
-        id: params.categoryId,
+        id: awaitedParams.categoryId,
         project: {
-          id: params.projectId,
+          id: awaitedParams.projectId,
           createdById: user.id,
         },
       },
@@ -107,7 +109,7 @@ export async function PUT(
     }
 
     const updatedCategory = await prisma.category.update({
-      where: { id: params.categoryId },
+      where: { id: awaitedParams.categoryId },
       data: validatedData,
       include: {
         _count: {
@@ -122,7 +124,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       )
     }
@@ -137,10 +139,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -150,9 +153,9 @@ export async function DELETE(
     // Verify user owns the category
     const category = await prisma.category.findFirst({
       where: {
-        id: params.categoryId,
+        id: awaitedParams.categoryId,
         project: {
-          id: params.projectId,
+          id: awaitedParams.projectId,
           createdById: user.id,
         },
       },
@@ -164,7 +167,7 @@ export async function DELETE(
 
     // Delete the category (cascade will delete related snags)
     await prisma.category.delete({
-      where: { id: params.categoryId },
+      where: { id: awaitedParams.categoryId },
     })
 
     return NextResponse.json({ success: true })

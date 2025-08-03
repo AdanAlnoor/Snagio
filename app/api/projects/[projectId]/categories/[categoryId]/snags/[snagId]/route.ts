@@ -16,10 +16,11 @@ const updateSnagSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string; snagId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string; snagId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -29,11 +30,11 @@ export async function GET(
     // Fetch snag with authorization check
     const snag = await prisma.snag.findFirst({
       where: {
-        id: params.snagId,
+        id: awaitedParams.snagId,
         category: {
-          id: params.categoryId,
+          id: awaitedParams.categoryId,
           project: {
-            id: params.projectId,
+            id: awaitedParams.projectId,
             createdById: user.id,
           },
         },
@@ -115,10 +116,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string; snagId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string; snagId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -128,11 +130,11 @@ export async function PUT(
     // Verify user owns the project
     const existingSnag = await prisma.snag.findFirst({
       where: {
-        id: params.snagId,
+        id: awaitedParams.snagId,
         category: {
-          id: params.categoryId,
+          id: awaitedParams.categoryId,
           project: {
-            id: params.projectId,
+            id: awaitedParams.projectId,
             createdById: user.id,
           },
         },
@@ -153,7 +155,7 @@ export async function PUT(
     if (validatedData.status && validatedData.status !== existingSnag.status) {
       await prisma.statusHistory.create({
         data: {
-          snagId: params.snagId,
+          snagId: awaitedParams.snagId,
           fromStatus: existingSnag.status,
           toStatus: validatedData.status,
           changedById: user.id,
@@ -164,7 +166,7 @@ export async function PUT(
 
     // Update the snag
     const updatedSnag = await prisma.snag.update({
-      where: { id: params.snagId },
+      where: { id: awaitedParams.snagId },
       data: {
         ...snagData,
         dueDate: snagData.dueDate ? new Date(snagData.dueDate) : null,
@@ -201,7 +203,7 @@ export async function PUT(
       // Remove existing photos not in the new list
       await prisma.snagPhoto.deleteMany({
         where: {
-          snagId: params.snagId,
+          snagId: awaitedParams.snagId,
           id: {
             notIn: photoIds,
           },
@@ -216,7 +218,7 @@ export async function PUT(
         await prisma.snagPhoto.createMany({
           data: newPhotoIds.map((photoId, index) => ({
             id: photoId,
-            snagId: params.snagId,
+            snagId: awaitedParams.snagId,
             url: `placeholder-${photoId}`,
             thumbnailUrl: `placeholder-thumb-${photoId}`,
             orderIndex: existingPhotoIds.length + index,
@@ -227,7 +229,7 @@ export async function PUT(
 
       // Fetch the updated snag with photos
       const finalSnag = await prisma.snag.findUnique({
-        where: { id: params.snagId },
+        where: { id: awaitedParams.snagId },
         include: {
           photos: true,
           assignedTo: {
@@ -260,7 +262,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       )
     }
@@ -275,10 +277,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string; snagId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string; snagId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -288,11 +291,11 @@ export async function DELETE(
     // Verify user owns the project
     const snag = await prisma.snag.findFirst({
       where: {
-        id: params.snagId,
+        id: awaitedParams.snagId,
         category: {
-          id: params.categoryId,
+          id: awaitedParams.categoryId,
           project: {
-            id: params.projectId,
+            id: awaitedParams.projectId,
             createdById: user.id,
           },
         },
@@ -305,7 +308,7 @@ export async function DELETE(
 
     // Delete snag (cascade will handle related records)
     await prisma.snag.delete({
-      where: { id: params.snagId },
+      where: { id: awaitedParams.snagId },
     })
 
     return NextResponse.json({ success: true })

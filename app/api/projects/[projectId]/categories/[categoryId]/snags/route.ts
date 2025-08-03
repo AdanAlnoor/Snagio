@@ -15,10 +15,11 @@ const createSnagSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -28,9 +29,9 @@ export async function GET(
     // Verify user owns the project
     const category = await prisma.category.findFirst({
       where: {
-        id: params.categoryId,
+        id: awaitedParams.categoryId,
         project: {
-          id: params.projectId,
+          id: awaitedParams.projectId,
           createdById: user.id,
         },
       },
@@ -43,7 +44,7 @@ export async function GET(
     // Fetch snags
     const snags = await prisma.snag.findMany({
       where: {
-        categoryId: params.categoryId,
+        categoryId: awaitedParams.categoryId,
       },
       include: {
         photos: {
@@ -90,10 +91,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { projectId: string; categoryId: string } }
+  { params }: { params: Promise<{ projectId: string; categoryId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -103,9 +105,9 @@ export async function POST(
     // Verify user owns the project
     const category = await prisma.category.findFirst({
       where: {
-        id: params.categoryId,
+        id: awaitedParams.categoryId,
         project: {
-          id: params.projectId,
+          id: awaitedParams.projectId,
           createdById: user.id,
         },
       },
@@ -120,7 +122,7 @@ export async function POST(
 
     // Get the next snag number for this category
     const lastSnag = await prisma.snag.findFirst({
-      where: { categoryId: params.categoryId },
+      where: { categoryId: awaitedParams.categoryId },
       orderBy: { number: 'desc' },
     })
 
@@ -134,7 +136,7 @@ export async function POST(
       data: {
         ...snagData,
         number,
-        categoryId: params.categoryId,
+        categoryId: awaitedParams.categoryId,
         createdById: user.id,
         status: 'OPEN',
         dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
@@ -225,7 +227,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       )
     }

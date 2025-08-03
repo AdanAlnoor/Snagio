@@ -18,10 +18,11 @@ const updateSettingsSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -34,7 +35,7 @@ export async function PUT(
     // Verify user owns the project
     const project = await prisma.project.findFirst({
       where: {
-        id: params.projectId,
+        id: awaitedParams.projectId,
         createdById: user.id,
       },
       include: {
@@ -49,12 +50,12 @@ export async function PUT(
     // Update or create settings
     const settings = await prisma.projectSettings.upsert({
       where: {
-        projectId: params.projectId,
+        projectId: awaitedParams.projectId,
       },
       update: validatedData,
       create: {
         ...validatedData,
-        projectId: params.projectId,
+        projectId: awaitedParams.projectId,
       },
     })
 
@@ -62,7 +63,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       )
     }

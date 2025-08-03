@@ -4,10 +4,11 @@ import { createServerClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -16,7 +17,7 @@ export async function GET(
 
     const project = await prisma.project.findFirst({
       where: {
-        id: params.projectId,
+        id: awaitedParams.projectId,
         createdById: user.id,
       },
       include: {
@@ -50,10 +51,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -65,7 +67,7 @@ export async function PUT(
     // Verify user owns the project
     const project = await prisma.project.findFirst({
       where: {
-        id: params.projectId,
+        id: awaitedParams.projectId,
         createdById: user.id,
       },
     })
@@ -75,7 +77,7 @@ export async function PUT(
     }
 
     const updatedProject = await prisma.project.update({
-      where: { id: params.projectId },
+      where: { id: awaitedParams.projectId },
       data: body,
       include: {
         settings: true,
@@ -94,10 +96,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -107,7 +110,7 @@ export async function DELETE(
     // Verify user owns the project
     const project = await prisma.project.findFirst({
       where: {
-        id: params.projectId,
+        id: awaitedParams.projectId,
         createdById: user.id,
       },
     })
@@ -117,7 +120,7 @@ export async function DELETE(
     }
 
     await prisma.project.delete({
-      where: { id: params.projectId },
+      where: { id: awaitedParams.projectId },
     })
 
     return NextResponse.json({ success: true })

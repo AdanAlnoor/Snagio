@@ -9,10 +9,11 @@ const createCommentSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { snagId: string } }
+  { params }: { params: Promise<{ snagId: string }> }
 ) {
   try {
-    const supabase = createServerClient()
+    const awaitedParams = await params
+    const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -22,7 +23,7 @@ export async function POST(
     // Verify user has access to the snag
     const snag = await prisma.snag.findFirst({
       where: {
-        id: params.snagId,
+        id: awaitedParams.snagId,
         category: {
           project: {
             createdById: user.id,
@@ -42,7 +43,7 @@ export async function POST(
     const comment = await prisma.comment.create({
       data: {
         content: validatedData.content,
-        snagId: params.snagId,
+        snagId: awaitedParams.snagId,
         userId: user.id,
       },
       include: {
@@ -67,7 +68,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       )
     }
