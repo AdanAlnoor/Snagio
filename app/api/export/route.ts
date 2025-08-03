@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/prisma'
 import jsPDF from 'jspdf'
+import { type NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { createServerClient } from '@/lib/supabase/server'
 import { fetchImageAsBase64 } from '@/lib/utils/pdf-image'
 
 // A4 dimensions in mm
@@ -10,12 +10,14 @@ const A4_HEIGHT = 297
 const MARGIN = 15
 const PHOTO_WIDTH = 70 // Critical requirement: 70mm photo width
 const PHOTO_HEIGHT = 52.5 // 4:3 aspect ratio
-const TEXT_COLUMN_WIDTH = A4_WIDTH - (2 * MARGIN) - PHOTO_WIDTH - 10 // 10mm gap between photo and text
+const TEXT_COLUMN_WIDTH = A4_WIDTH - 2 * MARGIN - PHOTO_WIDTH - 10 // 10mm gap between photo and text
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await createServerClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Add project header
     pdf.setFontSize(20)
     pdf.text(project.name, MARGIN, 20)
-    
+
     pdf.setFontSize(12)
     pdf.text(`Export Date: ${new Date().toLocaleDateString()}`, MARGIN, 30)
 
@@ -104,13 +106,27 @@ export async function POST(request: NextRequest) {
             // Fetch and embed actual image
             const imageData = await fetchImageAsBase64(photo.url)
             if (imageData) {
-              pdf.addImage(imageData, 'JPEG', MARGIN + 2, yPosition - 3, PHOTO_WIDTH, PHOTO_HEIGHT, undefined, 'FAST')
+              pdf.addImage(
+                imageData,
+                'JPEG',
+                MARGIN + 2,
+                yPosition - 3,
+                PHOTO_WIDTH,
+                PHOTO_HEIGHT,
+                undefined,
+                'FAST'
+              )
             } else {
               // Fallback if image fetch fails
               pdf.setFillColor(240, 240, 240)
               pdf.rect(MARGIN + 2, yPosition - 3, PHOTO_WIDTH, PHOTO_HEIGHT, 'F')
               pdf.setFontSize(8)
-              pdf.text('Image unavailable', MARGIN + PHOTO_WIDTH / 2, yPosition + PHOTO_HEIGHT / 2, { align: 'center' })
+              pdf.text(
+                'Image unavailable',
+                MARGIN + PHOTO_WIDTH / 2,
+                yPosition + PHOTO_HEIGHT / 2,
+                { align: 'center' }
+              )
             }
           } catch (error) {
             console.error('Error adding photo:', error)
@@ -118,14 +134,21 @@ export async function POST(request: NextRequest) {
             pdf.setFillColor(240, 240, 240)
             pdf.rect(MARGIN + 2, yPosition - 3, PHOTO_WIDTH, PHOTO_HEIGHT, 'F')
             pdf.setFontSize(8)
-            pdf.text('Error loading image', MARGIN + PHOTO_WIDTH / 2, yPosition + PHOTO_HEIGHT / 2, { align: 'center' })
+            pdf.text(
+              'Error loading image',
+              MARGIN + PHOTO_WIDTH / 2,
+              yPosition + PHOTO_HEIGHT / 2,
+              { align: 'center' }
+            )
           }
         } else {
           // No photo placeholder
           pdf.setFillColor(250, 250, 250)
           pdf.rect(MARGIN + 2, yPosition - 3, PHOTO_WIDTH, PHOTO_HEIGHT, 'F')
           pdf.setFontSize(8)
-          pdf.text('No Photo', MARGIN + PHOTO_WIDTH / 2, yPosition + PHOTO_HEIGHT / 2, { align: 'center' })
+          pdf.text('No Photo', MARGIN + PHOTO_WIDTH / 2, yPosition + PHOTO_HEIGHT / 2, {
+            align: 'center',
+          })
         }
 
         // Add text information next to photo
@@ -157,7 +180,10 @@ export async function POST(request: NextRequest) {
         }
 
         if (snag.description) {
-          const lines = pdf.splitTextToSize(`${labels.description}: ${snag.description}`, TEXT_COLUMN_WIDTH)
+          const lines = pdf.splitTextToSize(
+            `${labels.description}: ${snag.description}`,
+            TEXT_COLUMN_WIDTH
+          )
           pdf.text(lines, textX, textY)
           textY += lines.length * 4
         }
@@ -169,7 +195,9 @@ export async function POST(request: NextRequest) {
         textY += 5
 
         if (snag.assignedTo) {
-          const name = `${snag.assignedTo.firstName} ${snag.assignedTo.lastName}`.trim() || snag.assignedTo.email
+          const name =
+            `${snag.assignedTo.firstName} ${snag.assignedTo.lastName}`.trim() ||
+            snag.assignedTo.email
           pdf.text(`${labels.assignedTo}: ${name}`, textX, textY)
         }
 
@@ -194,9 +222,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Export error:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate PDF' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 })
   }
 }

@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+build
+coverage
+public
+*.config.js
+*.config.ts
+*.min.js
+prisma/generated

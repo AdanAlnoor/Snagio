@@ -1,9 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
   const supabase = createServerClient(
@@ -15,12 +17,16 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set({ name, value })
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
           cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value)
-            supabaseResponse = NextResponse.next({
-              request,
-            })
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           })
         },
       },
@@ -48,7 +54,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
+  // IMPORTANT: You *must* return the response object as it is.
   // If you're trying to modify the response, do it above.
-  return supabaseResponse
+  return response
 }

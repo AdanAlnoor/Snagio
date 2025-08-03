@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
-import { z } from 'zod'
 
 const updateSnagSchema = z.object({
   location: z.string().min(1, 'Location is required').optional(),
@@ -11,7 +11,11 @@ const updateSnagSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   assignedToId: z.string().uuid().nullable().optional(),
   dueDate: z.string().datetime().nullable().optional(),
-  photos: z.array(z.string()).optional(),
+  photos: z.array(z.object({
+    id: z.string(),
+    url: z.string(),
+    thumbnailUrl: z.string(),
+  })).optional(),
 })
 
 export async function GET(
@@ -21,7 +25,9 @@ export async function GET(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -107,10 +113,7 @@ export async function GET(
     return NextResponse.json(snag)
   } catch (error) {
     console.error('Error fetching snag:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch snag' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch snag' }, { status: 500 })
   }
 }
 
@@ -121,7 +124,9 @@ export async function PUT(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -149,7 +154,7 @@ export async function PUT(
     const validatedData = updateSnagSchema.parse(body)
 
     // Extract photos from validated data
-    const { photos: photoIds, ...snagData } = validatedData
+    const { photos, assignedToId, ...snagData } = validatedData
 
     // Handle status change history
     if (validatedData.status && validatedData.status !== existingSnag.status) {
@@ -169,6 +174,7 @@ export async function PUT(
       where: { id: awaitedParams.snagId },
       data: {
         ...snagData,
+        assignedToId: assignedToId || undefined,
         dueDate: snagData.dueDate ? new Date(snagData.dueDate) : null,
         completedDate: snagData.status === 'CLOSED' ? new Date() : existingSnag.completedDate,
       },
@@ -199,28 +205,31 @@ export async function PUT(
     })
 
     // Update photos if provided
-    if (photoIds !== undefined) {
+    if (photos !== undefined) {
+      // Get existing photo IDs
+      const existingPhotoIds = updatedSnag.photos.map(p => p.id)
+      const newPhotoIds = photos.map(p => p.id)
+
       // Remove existing photos not in the new list
       await prisma.snagPhoto.deleteMany({
         where: {
           snagId: awaitedParams.snagId,
           id: {
-            notIn: photoIds,
+            notIn: newPhotoIds,
           },
         },
       })
 
       // Add new photos
-      const existingPhotoIds = updatedSnag.photos.map(p => p.id)
-      const newPhotoIds = photoIds.filter(id => !existingPhotoIds.includes(id))
+      const photosToAdd = photos.filter(p => !existingPhotoIds.includes(p.id))
 
-      if (newPhotoIds.length > 0) {
+      if (photosToAdd.length > 0) {
         await prisma.snagPhoto.createMany({
-          data: newPhotoIds.map((photoId, index) => ({
-            id: photoId,
+          data: photosToAdd.map((photo, index) => ({
+            id: photo.id,
             snagId: awaitedParams.snagId,
-            url: `placeholder-${photoId}`,
-            thumbnailUrl: `placeholder-thumb-${photoId}`,
+            url: photo.url,
+            thumbnailUrl: photo.thumbnailUrl,
             orderIndex: existingPhotoIds.length + index,
             uploadedById: user.id,
           })),
@@ -261,17 +270,11 @@ export async function PUT(
     return NextResponse.json(updatedSnag)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.issues },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
 
     console.error('Error updating snag:', error)
-    return NextResponse.json(
-      { error: 'Failed to update snag' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update snag' }, { status: 500 })
   }
 }
 
@@ -282,13 +285,15 @@ export async function DELETE(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user owns the project
+    // Verify user owns the project and get the snag number
     const snag = await prisma.snag.findFirst({
       where: {
         id: awaitedParams.snagId,
@@ -299,6 +304,10 @@ export async function DELETE(
             createdById: user.id,
           },
         },
+      },
+      select: {
+        id: true,
+        number: true,
       },
     })
 
@@ -311,12 +320,17 @@ export async function DELETE(
       where: { id: awaitedParams.snagId },
     })
 
+    // Renumber all snags in this category that have a higher number
+    await prisma.$executeRaw`
+      UPDATE snags 
+      SET number = number - 1 
+      WHERE category_id = ${awaitedParams.categoryId} 
+      AND number > ${snag.number}
+    `
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting snag:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete snag' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to delete snag' }, { status: 500 })
   }
 }

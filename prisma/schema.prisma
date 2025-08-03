@@ -142,6 +142,7 @@ model SnagPhoto {
   url             String
   thumbnailUrl    String    @map("thumbnail_url")
   caption         String?
+  orderIndex      Int       @default(0) @map("order_index")
   hasMarkup       Boolean   @default(false) @map("has_markup")
   markupData      Json?     @map("markup_data") // Stores annotation data
   uploadedById    String    @map("uploaded_by_id")

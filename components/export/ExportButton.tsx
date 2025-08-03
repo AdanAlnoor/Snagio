@@ -1,8 +1,8 @@
 'use client'
 
+import { Download, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Download, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -100,12 +100,16 @@ export function ExportButton({ projectId, categories = [] }: ExportButtonProps) 
         <DialogHeader>
           <DialogTitle>Export to PDF</DialogTitle>
           <DialogDescription>
-            Choose what to include in your PDF export. Photos will be displayed at 70mm width for optimal printing.
+            Choose what to include in your PDF export. Photos will be displayed at 70mm width for
+            optimal printing.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <RadioGroup value={exportScope} onValueChange={(value: string) => setExportScope(value as 'all' | 'category')}>
+          <RadioGroup
+            value={exportScope}
+            onValueChange={(value: string) => setExportScope(value as 'all' | 'category')}
+          >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="all" id="all" />
               <Label htmlFor="all">Export all categories</Label>
@@ -122,7 +126,7 @@ export function ExportButton({ projectId, categories = [] }: ExportButtonProps) 
             <div className="space-y-2">
               <Label>Select category</Label>
               <RadioGroup value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                {categories.map((category) => (
+                {categories.map(category => (
                   <div key={category.id} className="flex items-center space-x-2">
                     <RadioGroupItem value={category.id} id={category.id} />
                     <Label htmlFor={category.id}>{category.name}</Label>

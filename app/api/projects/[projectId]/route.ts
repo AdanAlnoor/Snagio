@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -9,7 +9,9 @@ export async function GET(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -42,10 +44,7 @@ export async function GET(
     return NextResponse.json(project)
   } catch (error) {
     console.error('Error fetching project:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch project' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 })
   }
 }
 
@@ -56,7 +55,9 @@ export async function PUT(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -87,10 +88,7 @@ export async function PUT(
     return NextResponse.json(updatedProject)
   } catch (error) {
     console.error('Error updating project:', error)
-    return NextResponse.json(
-      { error: 'Failed to update project' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update project' }, { status: 500 })
   }
 }
 
@@ -101,7 +99,9 @@ export async function DELETE(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -126,9 +126,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting project:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete project' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 })
   }
 }

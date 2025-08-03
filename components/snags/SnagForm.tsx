@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
+import { CalendarIcon, FileText, Flag, MapPin, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { PhotoUploader } from '@/components/snags/PhotoUploader'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
@@ -19,6 +20,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -26,14 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { PhotoUploader } from '@/components/snags/PhotoUploader'
-import { Calendar } from '@/components/ui/calendar'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { CalendarIcon, MapPin, FileText, Users, Flag } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
 const formSchema = z.object({
@@ -61,6 +57,12 @@ interface SnagFormProps {
   snagId?: string
 }
 
+interface Photo {
+  id: string
+  url: string
+  thumbnailUrl: string
+}
+
 export function SnagForm({
   projectId,
   categoryId,
@@ -71,7 +73,7 @@ export function SnagForm({
 }: SnagFormProps) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>(initialData?.photos || [])
+  const [uploadedPhoto, setUploadedPhoto] = useState<Photo | null>(null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -92,20 +94,31 @@ export function SnagForm({
         ? `/api/projects/${projectId}/categories/${categoryId}/snags/${snagId}`
         : `/api/projects/${projectId}/categories/${categoryId}/snags`
 
+      const payload = {
+        ...data,
+        assignedToId: data.assignedToId || null,
+        dueDate: data.dueDate?.toISOString(),
+        photos: uploadedPhoto ? [{
+          id: uploadedPhoto.id,
+          url: uploadedPhoto.url,
+          thumbnailUrl: uploadedPhoto.thumbnailUrl,
+        }] : [],
+      }
+      
+      console.log('Sending snag payload:', payload)
+      
       const response = await fetch(url, {
         method: snagId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...data,
-          dueDate: data.dueDate?.toISOString(),
-          photos: uploadedPhotos,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to save')
+        const errorData = await response.json()
+        console.error('Snag creation failed:', errorData)
+        throw new Error(errorData.error || 'Failed to save')
       }
 
       const savedSnag = await response.json()
@@ -125,16 +138,16 @@ export function SnagForm({
         {/* Photo Upload - PRIMARY FOCUS */}
         <Card>
           <CardHeader>
-            <CardTitle>{settings.photoLabel || 'Photos'}</CardTitle>
+            <CardTitle>{settings.photoLabel || 'Photo'}</CardTitle>
             <CardDescription>
-              Upload photos to document the {(settings.itemLabel || 'snag').toLowerCase()}
+              Upload a photo to document the {(settings.itemLabel || 'snag').toLowerCase()}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <PhotoUploader
               projectId={projectId}
-              onPhotosUploaded={setUploadedPhotos}
-              existingPhotos={[]}
+              onPhotoUploaded={setUploadedPhoto}
+              existingPhoto={uploadedPhoto}
             />
           </CardContent>
         </Card>
@@ -197,7 +210,8 @@ export function SnagForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Describe how this {(settings.itemLabel || 'snag').toLowerCase()} should be addressed
+                    Describe how this {(settings.itemLabel || 'snag').toLowerCase()} should be
+                    addressed
                   </FormDescription>
                 </FormItem>
               )}
@@ -248,15 +262,14 @@ export function SnagForm({
                       <Users className="h-4 w-4" />
                       Assign To
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select team member" />
+                          <SelectValue placeholder="Select team member (optional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
-                        {teamMembers.map((member) => (
+                        {teamMembers.map(member => (
                           <SelectItem key={member.id} value={member.id}>
                             {member.firstName} {member.lastName}
                           </SelectItem>
@@ -285,11 +298,7 @@ export function SnagForm({
                             !field.value && 'text-muted-foreground'
                           )}
                         >
-                          {field.value ? (
-                            format(field.value, 'PPP')
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
+                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -299,16 +308,12 @@ export function SnagForm({
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
+                        disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    When should this be resolved by?
-                  </FormDescription>
+                  <FormDescription>When should this be resolved by?</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

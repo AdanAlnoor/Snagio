@@ -1,21 +1,24 @@
-import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
-import { createServerClient } from '@/lib/supabase/server'
+import { ArrowLeft, Camera, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { ExportButton } from '@/components/export/ExportButton'
+import { SnagListWrapper } from '@/components/snags/SnagListWrapper'
+import { SnagTable } from '@/components/snags/SnagTable'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Camera, FileText, ArrowLeft } from 'lucide-react'
-import { SnagTable } from '@/components/snags/SnagTable'
+import { prisma } from '@/lib/prisma'
+import { createServerClient } from '@/lib/supabase/server'
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     projectId: string
     categoryId: string
-  }
+  }>
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const supabase = createServerClient()
+  const resolvedParams = await params
+  const supabase = await createServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -27,9 +30,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   // Fetch category with project info
   const category = await prisma.category.findFirst({
     where: {
-      id: params.categoryId,
+      id: resolvedParams.categoryId,
       project: {
-        id: params.projectId,
+        id: resolvedParams.projectId,
         createdById: user.id,
       },
     },
@@ -56,7 +59,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   // Fetch snags with photos
   const snags = await prisma.snag.findMany({
     where: {
-      categoryId: params.categoryId,
+      categoryId: resolvedParams.categoryId,
     },
     include: {
       photos: {
@@ -67,14 +70,30 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       },
       assignedTo: {
         select: {
+          id: true,
           firstName: true,
           lastName: true,
+        },
+      },
+      _count: {
+        select: {
+          comments: true,
         },
       },
     },
     orderBy: {
       number: 'asc',
     },
+  })
+
+  // Fetch team members for filter
+  const teamMembers = await prisma.user.findMany({
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+    },
+    orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
   })
 
   // Get stats
@@ -95,81 +114,64 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   return (
     <div className="h-full">
-      {/* Header */}
+      {/* Compact Header - Everything on one line */}
       <div className="bg-card border-b">
-        <div className="container mx-auto p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Link href={`/projects/${params.projectId}/categories`}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Categories
-              </Button>
-            </Link>
-          </div>
-
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {category.project.name} / {category.project.code}
-              </p>
-              <h1 className="text-3xl font-bold">{category.name}</h1>
-              {category.description && (
-                <p className="text-muted-foreground mt-2">{category.description}</p>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Link href={`/projects/${params.projectId}/categories/${params.categoryId}/snags/new`}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New {projectSettings.itemLabel}
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left side - Navigation and Info */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <Link href={`/projects/${resolvedParams.projectId}/categories`}>
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
                 </Button>
               </Link>
+              
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">{category.project.name} / {category.project.code}</span>
+                <span className="text-muted-foreground">•</span>
+                <span className="font-semibold">{category.name}</span>
+                {category.description && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{category.description}</span>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mt-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total {projectSettings.itemLabel}s
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Open
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-orange-600">{stats.open}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Closed
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-green-600">{stats.closed}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  <Camera className="h-4 w-4 inline mr-1" />
-                  With Photos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{stats.withPhotos}</p>
-              </CardContent>
-            </Card>
+            {/* Right side - Stats and Actions */}
+            <div className="flex items-center gap-4">
+              {/* Compact Stats */}
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-muted-foreground">Total: <span className="font-semibold text-foreground">{stats.total}</span></span>
+                <span className="text-muted-foreground">|</span>
+                <span className="text-muted-foreground">Open: <span className="font-semibold text-orange-600">{stats.open}</span></span>
+                <span className="text-muted-foreground">|</span>
+                <span className="text-muted-foreground">Closed: <span className="font-semibold text-green-600">{stats.closed}</span></span>
+                <span className="text-muted-foreground">|</span>
+                <span className="flex items-center gap-1">
+                  <Camera className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-semibold text-foreground">{stats.withPhotos}</span>
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <ExportButton
+                  projectId={resolvedParams.projectId}
+                  categories={[{ id: category.id, name: category.name }]}
+                />
+                <Link
+                  href={`/projects/${resolvedParams.projectId}/categories/${resolvedParams.categoryId}/snags/new`}
+                >
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New {projectSettings.itemLabel}
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -184,7 +186,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               <p className="text-muted-foreground mb-4">
                 Create your first {projectSettings.itemLabel.toLowerCase()} to get started
               </p>
-              <Link href={`/projects/${params.projectId}/categories/${params.categoryId}/snags/new`}>
+              <Link
+                href={`/projects/${resolvedParams.projectId}/categories/${resolvedParams.categoryId}/snags/new`}
+              >
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Create {projectSettings.itemLabel}
@@ -193,11 +197,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </CardContent>
           </Card>
         ) : (
-          <SnagTable
+          <SnagListWrapper
             snags={snags}
-            projectId={params.projectId}
-            categoryId={params.categoryId}
+            projectId={resolvedParams.projectId}
+            categoryId={resolvedParams.categoryId}
             settings={projectSettings}
+            teamMembers={teamMembers}
           />
         )}
       </div>

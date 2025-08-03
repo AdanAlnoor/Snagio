@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { ArrowLeft, CheckCircle2, Clock, FolderOpen, Image, Plus } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Plus, FolderOpen, Image, Clock, CheckCircle2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { use, useEffect, useState } from 'react'
 import { CategoryCard } from '@/components/categories/CategoryCard'
 import { ExportButton } from '@/components/export/ExportButton'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Category {
   id: string
@@ -35,11 +35,8 @@ interface Project {
   }
 }
 
-export default function CategoriesPage({
-  params,
-}: {
-  params: { projectId: string }
-}) {
+export default function CategoriesPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = use(params)
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [project, setProject] = useState<Project | null>(null)
@@ -48,20 +45,20 @@ export default function CategoriesPage({
 
   useEffect(() => {
     fetchData()
-  }, [params.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
       setLoading(true)
-      
+
       // Fetch project details
-      const projectResponse = await fetch(`/api/projects/${params.projectId}`)
+      const projectResponse = await fetch(`/api/projects/${projectId}`)
       if (!projectResponse.ok) throw new Error('Failed to fetch project')
       const projectData = await projectResponse.json()
       setProject(projectData)
-      
+
       // Fetch categories
-      const categoriesResponse = await fetch(`/api/projects/${params.projectId}/categories`)
+      const categoriesResponse = await fetch(`/api/projects/${projectId}/categories`)
       if (!categoriesResponse.ok) throw new Error('Failed to fetch categories')
       const categoriesData = await categoriesResponse.json()
       setCategories(categoriesData)
@@ -101,23 +98,23 @@ export default function CategoriesPage({
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <Link 
-          href="/projects" 
+        <Link
+          href="/projects"
           className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to projects
         </Link>
-        
+
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold">{project?.name}</h1>
             <p className="text-gray-600">Project Code: {project?.code}</p>
           </div>
-          
+
           <div className="flex gap-2">
-            <ExportButton projectId={params.projectId} categories={categories} />
-            <Link href={`/projects/${params.projectId}/categories/new`}>
+            <ExportButton projectId={projectId} categories={categories} />
+            <Link href={`/projects/${projectId}/categories/new`}>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Category
@@ -131,9 +128,7 @@ export default function CategoriesPage({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Categories
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Categories</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -145,9 +140,7 @@ export default function CategoriesPage({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total {itemLabel}s
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Total {itemLabel}s</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -159,9 +152,7 @@ export default function CategoriesPage({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Open {itemLabel}s
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Open {itemLabel}s</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -173,9 +164,7 @@ export default function CategoriesPage({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Closed {itemLabel}s
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Closed {itemLabel}s</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
@@ -195,7 +184,7 @@ export default function CategoriesPage({
             <p className="text-gray-600 mb-4">
               Create your first category to start organizing {itemLabel.toLowerCase()}s
             </p>
-            <Link href={`/projects/${params.projectId}/categories/new`}>
+            <Link href={`/projects/${projectId}/categories/new`}>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Category
@@ -205,11 +194,11 @@ export default function CategoriesPage({
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category) => (
+          {categories.map(category => (
             <CategoryCard
               key={category.id}
               category={category}
-              projectId={params.projectId}
+              projectId={projectId}
               itemLabel={itemLabel}
               onUpdate={fetchData}
             />

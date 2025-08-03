@@ -1,20 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { CheckCircle2, Clock, Edit, FolderOpen, Image, MoreVertical, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  FolderOpen,
-  Image,
-  Clock,
-  CheckCircle2
-} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,11 +43,15 @@ const iconMap: { [key: string]: React.ElementType } = {
 export function CategoryCard({ category, projectId, itemLabel, onUpdate }: CategoryCardProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
-  
+
   const IconComponent = iconMap[category.icon] || FolderOpen
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${category.name}"? This will also delete all ${itemLabel.toLowerCase()}s in this category.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${category.name}"? This will also delete all ${itemLabel.toLowerCase()}s in this category.`
+      )
+    ) {
       return
     }
 
@@ -78,34 +74,27 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
     }
   }
 
-  const completionRate = category._count.snags > 0 
-    ? Math.round((category.closedSnagCount / category._count.snags) * 100)
-    : 0
+  const completionRate =
+    category._count.snags > 0
+      ? Math.round((category.closedSnagCount / category._count.snags) * 100)
+      : 0
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div 
-              className="p-2 rounded-lg"
-              style={{ backgroundColor: category.color + '20' }}
-            >
-              <IconComponent 
-                className="h-6 w-6" 
-                style={{ color: category.color }}
-              />
+            <div className="p-2 rounded-lg" style={{ backgroundColor: category.color + '20' }}>
+              <IconComponent className="h-6 w-6" style={{ color: category.color }} />
             </div>
             <div>
               <CardTitle className="text-lg">{category.name}</CardTitle>
               {category.description && (
-                <CardDescription className="mt-1">
-                  {category.description}
-                </CardDescription>
+                <CardDescription className="mt-1">{category.description}</CardDescription>
               )}
             </div>
           </div>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" disabled={deleting}>
@@ -119,10 +108,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={handleDelete}
-              >
+              <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -130,7 +116,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
           </DropdownMenu>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="space-y-4">
           {/* Stats */}
@@ -160,7 +146,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
                 <span className="font-medium">{completionRate}%</span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-green-500 transition-all"
                   style={{ width: `${completionRate}%` }}
                 />
@@ -169,7 +155,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
           )}
 
           {/* View Button */}
-          <Link href={`/projects/${projectId}/categories/${category.id}/snags`}>
+          <Link href={`/projects/${projectId}/categories/${category.id}`}>
             <Button className="w-full" variant="outline">
               View {itemLabel}s
             </Button>

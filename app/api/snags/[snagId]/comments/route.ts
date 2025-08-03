@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
-import { z } from 'zod'
 
 const createCommentSchema = z.object({
   content: z.string().min(1, 'Comment content is required'),
@@ -14,7 +14,9 @@ export async function POST(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -63,20 +65,14 @@ export async function POST(
       ...comment,
       createdBy: comment.user,
     }
-    
+
     return NextResponse.json(transformedComment)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.issues },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
 
     console.error('Error creating comment:', error)
-    return NextResponse.json(
-      { error: 'Failed to create comment' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 })
   }
 }

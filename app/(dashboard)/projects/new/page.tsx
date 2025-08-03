@@ -1,13 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface ProjectFormData {
@@ -25,7 +32,7 @@ export default function NewProjectPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     code: '',
@@ -46,7 +53,9 @@ export default function NewProjectPage() {
 
   const generateProjectCode = () => {
     const prefix = formData.name.substring(0, 3).toUpperCase() || 'PRJ'
-    const number = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+    const number = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, '0')
     setFormData({
       ...formData,
       code: `${prefix}-${number}`,
@@ -60,8 +69,10 @@ export default function NewProjectPage() {
 
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
       if (!user) {
         router.push('/login')
         return
@@ -94,7 +105,10 @@ export default function NewProjectPage() {
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
-      <Link href="/projects" className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6">
+      <Link
+        href="/projects"
+        className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+      >
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back to projects
       </Link>
@@ -228,9 +242,7 @@ export default function NewProjectPage() {
               </div>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </CardContent>
 
           <CardFooter className="flex justify-end gap-4">

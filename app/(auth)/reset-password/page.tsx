@@ -1,11 +1,18 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 
 export default function ResetPasswordPage() {
@@ -55,32 +62,21 @@ export default function ResetPasswordPage() {
               type="email"
               placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
-          {message && (
-            <p className="text-sm text-green-600">{message}</p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {message && <p className="text-sm text-green-600">{message}</p>}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading || !!message}
-          >
+          <Button type="submit" className="w-full" disabled={loading || !!message}>
             {loading ? 'Sending...' : 'Send reset link'}
           </Button>
           <div className="text-sm text-center">
             Remember your password?{' '}
-            <Link
-              href="/login"
-              className="text-orange-600 hover:underline"
-            >
+            <Link href="/login" className="text-orange-600 hover:underline">
               Sign in
             </Link>
           </div>

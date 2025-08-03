@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useRouter } from 'next/navigation'
 
 interface Comment {
   id: string
@@ -72,7 +72,7 @@ export function SnagComments({ snagId, comments }: SnagCommentsProps) {
         <Textarea
           placeholder="Add a comment..."
           value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          onChange={e => setNewComment(e.target.value)}
           className="min-h-[100px]"
         />
         <div className="flex justify-end">
@@ -89,7 +89,7 @@ export function SnagComments({ snagId, comments }: SnagCommentsProps) {
             No comments yet. Be the first to comment!
           </p>
         ) : (
-          comments.map((comment) => (
+          comments.map(comment => (
             <div key={comment.id} className="flex gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs">
@@ -98,9 +98,7 @@ export function SnagComments({ snagId, comments }: SnagCommentsProps) {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-sm">
-                    {getName(comment.createdBy)}
-                  </span>
+                  <span className="font-medium text-sm">{getName(comment.createdBy)}</span>
                   <span className="text-xs text-muted-foreground">
                     {format(new Date(comment.createdAt), 'PPp')}
                   </span>

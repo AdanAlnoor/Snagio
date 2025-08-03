@@ -10,11 +10,7 @@ export const metadata: Metadata = {
     'Photo-centric inspection and issue tracking for construction, property inspections, and quality control',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className={inter.className}>{children}</body>

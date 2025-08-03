@@ -1,4 +1,8 @@
-import { PrismaClient, Role, ProjectStatus, Priority, SnagStatus, PhotoSize } from '@prisma/client'
+import { PhotoSize, Priority, PrismaClient, ProjectStatus, Role, SnagStatus } from '@prisma/client'
+import * as dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
 
 const prisma = new PrismaClient()
 
@@ -170,7 +174,7 @@ main()
   .then(async () => {
     await prisma.$disconnect()
   })
-  .catch(async (e) => {
+  .catch(async e => {
     console.error('❌ Seed failed:', e)
     await prisma.$disconnect()
     process.exit(1)

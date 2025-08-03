@@ -1,20 +1,43 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    // Check for messages or errors in URL params
+    const urlMessage = searchParams.get('message')
+    const urlError = searchParams.get('error')
+
+    if (urlMessage) {
+      setMessage(urlMessage)
+    }
+
+    if (urlError === 'profile_creation_failed') {
+      setError('Failed to create user profile. Please contact support.')
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,9 +68,7 @@ export default function LoginPage() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
-        <CardDescription>
-          Enter your email and password to access your account
-        </CardDescription>
+        <CardDescription>Enter your email and password to access your account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -58,7 +79,7 @@ export default function LoginPage() {
               type="email"
               placeholder="name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               disabled={loading}
             />
@@ -69,38 +90,27 @@ export default function LoginPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               disabled={loading}
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {message && <p className="text-sm text-green-600">{message}</p>}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
           <div className="text-sm text-center space-y-2">
             <div>
-              <Link
-                href="/reset-password"
-                className="text-orange-600 hover:underline"
-              >
+              <Link href="/reset-password" className="text-orange-600 hover:underline">
                 Forgot your password?
               </Link>
             </div>
             <div>
               Don&apos;t have an account?{' '}
-              <Link
-                href="/register"
-                className="text-orange-600 hover:underline"
-              >
+              <Link href="/register" className="text-orange-600 hover:underline">
                 Sign up
               </Link>
             </div>

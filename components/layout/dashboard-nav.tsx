@@ -1,19 +1,21 @@
 'use client'
 
+import { FolderOpen, LogOut, Settings, User as UserIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { User } from '@supabase/supabase-js'
-import { LogOut, FolderOpen, Settings, User as UserIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 
 interface DashboardNavProps {
-  user: User
+  user: {
+    id: string
+    email: string
+  }
 }
 
 export function DashboardNav({ user }: DashboardNavProps) {
   const router = useRouter()
-  
+
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -27,7 +29,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
         <Link href="/projects" className="flex items-center space-x-2">
           <h1 className="text-2xl font-bold text-orange-600">Snagio</h1>
         </Link>
-        
+
         <div className="ml-auto flex items-center space-x-4">
           <Link href="/projects">
             <Button variant="ghost" size="sm">
@@ -35,24 +37,20 @@ export function DashboardNav({ user }: DashboardNavProps) {
               Projects
             </Button>
           </Link>
-          
+
           <Link href="/settings">
             <Button variant="ghost" size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
           </Link>
-          
+
           <div className="flex items-center space-x-2 text-sm">
             <UserIcon className="h-4 w-4" />
             <span>{user.email}</span>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-          >
+
+          <Button variant="ghost" size="sm" onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

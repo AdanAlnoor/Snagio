@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/prisma'
+import { type NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
+import { prisma } from '@/lib/prisma'
+import { createServerClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await createServerClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -17,10 +19,7 @@ export async function POST(request: NextRequest) {
     const projectId = formData.get('projectId') as string
 
     if (!file || !projectId) {
-      return NextResponse.json(
-        { error: 'File and projectId are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File and projectId are required' }, { status: 400 })
     }
 
     // Verify user owns the project
@@ -55,10 +54,7 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error('Upload error:', uploadError)
-      return NextResponse.json(
-        { error: 'Failed to upload file' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
     // Generate thumbnail (in production, use image processing service)
@@ -72,13 +68,13 @@ export async function POST(request: NextRequest) {
       })
 
     // Get public URLs
-    const { data: { publicUrl: originalUrl } } = supabase.storage
-      .from('snag-photos')
-      .getPublicUrl(fileName)
+    const {
+      data: { publicUrl: originalUrl },
+    } = supabase.storage.from('snag-photos').getPublicUrl(fileName)
 
-    const { data: { publicUrl: thumbnailUrl } } = supabase.storage
-      .from('snag-photos')
-      .getPublicUrl(thumbnailName)
+    const {
+      data: { publicUrl: thumbnailUrl },
+    } = supabase.storage.from('snag-photos').getPublicUrl(thumbnailName)
 
     // Return photo data (not saved to DB yet - will be linked when snag is created)
     return NextResponse.json({
@@ -90,9 +86,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json(
-      { error: 'Failed to upload file' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
   }
 }

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
-import { z } from 'zod'
 
 const updateSettingsSchema = z.object({
   itemLabel: z.string().min(1),
@@ -23,7 +23,9 @@ export async function PUT(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -62,16 +64,10 @@ export async function PUT(
     return NextResponse.json(settings)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.issues },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
 
     console.error('Error updating settings:', error)
-    return NextResponse.json(
-      { error: 'Failed to update settings' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
   }
 }

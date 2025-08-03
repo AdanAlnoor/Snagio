@@ -66,9 +66,7 @@ export function StatusHistory({ history }: StatusHistoryProps) {
               <p className="text-xs text-muted-foreground">
                 {getName(item.changedBy)} • {format(new Date(item.changedAt), 'PPp')}
               </p>
-              {item.reason && (
-                <p className="text-sm text-muted-foreground">{item.reason}</p>
-              )}
+              {item.reason && <p className="text-sm text-muted-foreground">{item.reason}</p>}
             </div>
           </div>
         </div>

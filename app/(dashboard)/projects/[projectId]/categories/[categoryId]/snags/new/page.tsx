@@ -1,17 +1,20 @@
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { SnagForm } from '@/components/snags/SnagForm'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { SnagForm } from '@/components/snags/SnagForm'
 
 export default async function NewSnagPage({
   params,
 }: {
-  params: { projectId: string; categoryId: string }
+  params: Promise<{ projectId: string; categoryId: string }>
 }) {
-  const supabase = createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const resolvedParams = await params
+  const supabase = await createServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     notFound()
@@ -20,9 +23,9 @@ export default async function NewSnagPage({
   // Fetch category with project for authorization
   const category = await prisma.category.findFirst({
     where: {
-      id: params.categoryId,
+      id: resolvedParams.categoryId,
       project: {
-        id: params.projectId,
+        id: resolvedParams.projectId,
         createdById: user.id,
       },
     },
@@ -50,25 +53,22 @@ export default async function NewSnagPage({
       lastName: true,
       email: true,
     },
-    orderBy: [
-      { firstName: 'asc' },
-      { lastName: 'asc' },
-    ],
+    orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
   })
 
-  const settings = category.project.settings as any || {}
+  const settings = (category.project.settings as any) || {}
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-6">
-        <Link 
-          href={`/projects/${params.projectId}/categories/${params.categoryId}`}
+        <Link
+          href={`/projects/${resolvedParams.projectId}/categories/${resolvedParams.categoryId}`}
           className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to {category.name}
         </Link>
-        
+
         <h1 className="text-3xl font-bold">New {settings.itemLabel || 'Snag'}</h1>
         <p className="text-muted-foreground">
           Add a new {(settings.itemLabel || 'snag').toLowerCase()} to {category.name}
@@ -76,8 +76,8 @@ export default async function NewSnagPage({
       </div>
 
       <SnagForm
-        projectId={params.projectId}
-        categoryId={params.categoryId}
+        projectId={resolvedParams.projectId}
+        categoryId={resolvedParams.categoryId}
         teamMembers={teamMembers}
         settings={settings}
       />

@@ -5,7 +5,6 @@
 Create a full-stack application called "Snagio" - a flexible inspection and issue tracking system that can be used for construction snagging, quality control, property inspections, or any visual documentation workflow. The system allows users to customize column headers to adapt to different use cases.
 
 ### Core Use Cases
-
 1. **Construction Snagging**: Track defects in construction projects
 2. **Property Inspections**: Document issues during property surveys
 3. **Quality Control**: Manufacturing or product quality checks
@@ -58,14 +57,14 @@ model User {
   avatarUrl       String?   @map("avatar_url")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
-
+  
   createdProjects Project[]
   assignedSnags   Snag[]    @relation("SnagAssignee")
   createdSnags    Snag[]    @relation("SnagCreator")
   comments        Comment[]
   uploadedPhotos  SnagPhoto[]
   statusChanges   StatusHistory[]
-
+  
   @@map("users")
 }
 
@@ -84,11 +83,11 @@ model Project {
   createdBy        User      @relation(fields: [createdById], references: [id])
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
-
+  
   // Customizable settings
   settings         ProjectSettings?
   categories       Category[]
-
+  
   @@index([status])
   @@index([createdById])
   @@map("projects")
@@ -98,7 +97,7 @@ model ProjectSettings {
   id              String    @id @default(uuid())
   projectId       String    @unique @map("project_id")
   project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
+  
   // Customizable column headers
   itemLabel       String    @default("Snag") @map("item_label") // e.g., "Snag", "Issue", "Defect"
   numberLabel     String    @default("No.") @map("number_label")
@@ -107,17 +106,17 @@ model ProjectSettings {
   descriptionLabel String   @default("Description") @map("description_label")
   solutionLabel   String    @default("Solution") @map("solution_label")
   statusLabel     String    @default("STATUS") @map("status_label")
-
+  
   // Custom status options
   customStatuses  Json?     @map("custom_statuses") // Array of {value, label, color}
-
+  
   // Display preferences
   photoSize       PhotoSize @default(LARGE) @map("photo_size")
   rowsPerPage     Int       @default(5) @map("rows_per_page")
-
+  
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
-
+  
   @@map("project_settings")
 }
 
@@ -134,9 +133,9 @@ model Category {
   subCategories    Category[] @relation("CategoryTree")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
-
+  
   snags            Snag[]
-
+  
   @@unique([projectId, code])
   @@index([projectId])
   @@map("categories")
@@ -160,11 +159,11 @@ model Snag {
   completedDate   DateTime?  @map("completed_date")
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
-
+  
   photos          SnagPhoto[]
   comments        Comment[]
   statusHistory   StatusHistory[]
-
+  
   @@unique([categoryId, number])
   @@index([status])
   @@index([priority])
@@ -184,7 +183,7 @@ model SnagPhoto {
   uploadedById    String    @map("uploaded_by_id")
   uploadedBy      User      @relation(fields: [uploadedById], references: [id])
   uploadedAt      DateTime  @default(now()) @map("uploaded_at")
-
+  
   @@index([snagId])
   @@map("snag_photos")
 }
@@ -198,7 +197,7 @@ model Comment {
   content         String
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
-
+  
   @@index([snagId])
   @@map("comments")
 }
@@ -213,7 +212,7 @@ model StatusHistory {
   changedBy       User      @relation(fields: [changedById], references: [id])
   reason          String?
   changedAt       DateTime  @default(now()) @map("changed_at")
-
+  
   @@index([snagId])
   @@map("status_history")
 }
@@ -257,7 +256,6 @@ enum PhotoSize {
 ## Detailed User Flows
 
 ### 1. New User Onboarding Flow
-
 ```
 Landing Page
     ↓
@@ -278,7 +276,6 @@ Welcome Dashboard
 ```
 
 ### 2. Project Creation Flow
-
 ```
 Dashboard → "New Project" Button
     ↓
@@ -333,7 +330,6 @@ Project Created → Redirect to Project Dashboard
 ```
 
 ### 3. Inspection/Item Creation Flow
-
 ```
 Project Dashboard
     ↓
@@ -392,7 +388,6 @@ Success → Return to Category View
 ```
 
 ### 4. Item Management Flow
-
 ```
 Category View → Click on Item Row/Card
     ↓
@@ -425,7 +420,6 @@ Available Actions:
 ```
 
 ### 5. Status Update Flow
-
 ```
 Current Status: OPEN
     ↓
@@ -448,7 +442,6 @@ Status Changed
 ```
 
 ### 6. Report Generation Flow
-
 ```
 Project/Category View → "Generate Report" Button
     ↓
@@ -485,7 +478,6 @@ Generate & Download
 ```
 
 ### 7. Mobile-Specific Flow
-
 ```
 Mobile App Launch
     ↓
@@ -511,7 +503,6 @@ Batch Upload When Online
 ```
 
 ### 8. Search and Filter Flow
-
 ```
 Any List View → Search Bar
     ↓
@@ -541,7 +532,6 @@ Actions on Filtered Results:
 ```
 
 ### 9. Collaboration Flow
-
 ```
 Multiple Users on Same Category
     ↓
@@ -565,7 +555,6 @@ Concurrent Editing Protection
 ```
 
 ### 10. PDF Export Detail Flow
-
 ```
 Generate PDF Request
     ↓
@@ -597,7 +586,6 @@ Output Options:
 ### 11. Error Handling Flows
 
 #### Photo Upload Error
-
 ```
 Select/Capture Photo → Upload Fails
     ↓
@@ -610,7 +598,6 @@ Retry with reduced quality option
 ```
 
 #### Offline Conflict Resolution
-
 ```
 Item edited offline by User A
 Item edited online by User B
@@ -627,7 +614,6 @@ Conflict Resolution Dialog:
 ```
 
 ### 12. Settings Management Flow
-
 ```
 Project Dashboard → Settings Icon
     ↓
@@ -661,24 +647,21 @@ Settings Tabs:
 ## A4 PDF Layout Specifications
 
 ### Page Setup
-
 - **Size**: 210mm × 297mm (A4 Portrait)
 - **Margins**: 15mm all sides
 - **Content Area**: 180mm × 267mm
 
 ### Column Layout (Photo-Centric)
-
-| Column      | Width            | Purpose           |
-| ----------- | ---------------- | ----------------- |
-| Number      | 15mm (8.3%)      | Item number       |
-| Location    | 25mm (13.9%)     | Category/location |
-| **Photo**   | **70mm (38.9%)** | **Main focus**    |
-| Description | 35mm (19.4%)     | Issue details     |
-| Solution    | 20mm (11.1%)     | Proposed fix      |
-| Status      | 15mm (8.3%)      | Current state     |
+| Column | Width | Purpose |
+|--------|-------|---------|
+| Number | 15mm (8.3%) | Item number |
+| Location | 25mm (13.9%) | Category/location |
+| **Photo** | **70mm (38.9%)** | **Main focus** |
+| Description | 35mm (19.4%) | Issue details |
+| Solution | 20mm (11.1%) | Proposed fix |
+| Status | 15mm (8.3%) | Current state |
 
 ### Row Specifications
-
 - **Header**: 8mm height
 - **Data Rows**: 50mm height
 - **Photo Size**: 65mm × 45mm
@@ -687,12 +670,11 @@ Settings Tabs:
 ## Key Implementation Components
 
 ### 1. Projects List Page Component
-
 ```typescript
 // app/(dashboard)/projects/page.tsx
 export default async function ProjectsListPage() {
   const projects = await getProjects();
-
+  
   return (
     <div className="container mx-auto p-6">
       <PageHeader
@@ -706,11 +688,11 @@ export default async function ProjectsListPage() {
           </Link>
         }
       />
-
+      
       <div className="mb-6">
         <SearchAndFilters />
       </div>
-
+      
       {projects.length === 0 ? (
         <EmptyState
           title="No projects yet"
@@ -734,7 +716,6 @@ export default async function ProjectsListPage() {
 ```
 
 ### 2. Categories List Page Component
-
 ```typescript
 // app/(dashboard)/projects/[projectId]/categories/page.tsx
 export default async function CategoriesListPage({
@@ -745,16 +726,16 @@ export default async function CategoriesListPage({
   const project = await getProject(params.projectId);
   const categories = await getCategories(params.projectId);
   const stats = await getProjectStats(params.projectId);
-
+  
   return (
     <div className="container mx-auto p-6">
       <Breadcrumb items={[
         { label: 'Projects', href: '/projects' },
         { label: project.name }
       ]} />
-
+      
       <ProjectInfoBar project={project} stats={stats} />
-
+      
       <PageHeader
         title="Categories"
         action={
@@ -769,7 +750,7 @@ export default async function CategoriesListPage({
           </div>
         }
       />
-
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {categories.map((category) => (
           <CategoryCard
@@ -785,7 +766,6 @@ export default async function CategoriesListPage({
 ```
 
 ### 3. Snags List Page Component (Photo-Centric Table)
-
 ```typescript
 // app/(dashboard)/projects/[projectId]/categories/[categoryId]/snags/page.tsx
 export default async function SnagsListPage({
@@ -796,7 +776,7 @@ export default async function SnagsListPage({
   const project = await getProject(params.projectId);
   const category = await getCategory(params.categoryId);
   const snags = await getSnags(params.categoryId);
-
+  
   return (
     <div className="container mx-auto p-6">
       <Breadcrumb items={[
@@ -804,15 +784,15 @@ export default async function SnagsListPage({
         { label: project.name, href: `/projects/${project.id}/categories` },
         { label: category.name }
       ]} />
-
+      
       <PageHeader
         title={`${category.name} ${project.settings?.itemLabel || 'Snags'}`}
         stats={<CategoryStats category={category} />}
         action={
           <div className="flex gap-2">
             <ViewToggle />
-            <ExportButton
-              project={project}
+            <ExportButton 
+              project={project} 
               category={category}
               snags={snags}
             />
@@ -825,12 +805,12 @@ export default async function SnagsListPage({
           </div>
         }
       />
-
+      
       <FiltersBar />
-
+      
       <div className="mt-6">
-        <SnagsTable
-          snags={snags}
+        <SnagsTable 
+          snags={snags} 
           settings={project.settings}
           categoryCode={category.code}
         />
@@ -841,7 +821,6 @@ export default async function SnagsListPage({
 ```
 
 ### 4. Navigation Components
-
 ```typescript
 // components/layout/NavigationBreadcrumb.tsx
 export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
@@ -876,7 +855,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { projectId, categoryId } = useParams();
-
+  
   const getAddLink = () => {
     if (pathname.includes('/snags')) {
       return `/projects/${projectId}/categories/${categoryId}/snags/new`;
@@ -886,7 +865,7 @@ export function MobileBottomNav() {
       return '/projects/new';
     }
   };
-
+  
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden">
       <div className="grid grid-cols-4 h-16">
@@ -894,9 +873,9 @@ export function MobileBottomNav() {
           <FolderOpen className="w-5 h-5" />
           <span className="text-xs mt-1">Projects</span>
         </Link>
-
+        
         {categoryId && (
-          <Link
+          <Link 
             href={`/projects/${projectId}/categories/${categoryId}/snags`}
             className="flex flex-col items-center justify-center"
           >
@@ -904,14 +883,14 @@ export function MobileBottomNav() {
             <span className="text-xs mt-1">Current</span>
           </Link>
         )}
-
-        <Link
+        
+        <Link 
           href={getAddLink()}
           className="flex flex-col items-center justify-center text-orange-600"
         >
           <PlusCircle className="w-8 h-8" />
         </Link>
-
+        
         <Link href="/profile" className="flex flex-col items-center justify-center">
           <User className="w-5 h-5" />
           <span className="text-xs mt-1">Profile</span>
@@ -923,12 +902,11 @@ export function MobileBottomNav() {
 ```
 
 ### 5. List Components
-
 ```typescript
 // components/projects/ProjectCard.tsx
 export function ProjectCard({ project }: { project: Project }) {
   const stats = useProjectStats(project.id);
-
+  
   return (
     <Link href={`/projects/${project.id}/categories`}>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -963,15 +941,15 @@ export function ProjectCard({ project }: { project: Project }) {
 }
 
 // components/categories/CategoryCard.tsx
-export function CategoryCard({
-  category,
-  projectId
-}: {
+export function CategoryCard({ 
+  category, 
+  projectId 
+}: { 
   category: Category;
   projectId: string;
 }) {
   const stats = useCategoryStats(category.id);
-
+  
   return (
     <Link href={`/projects/${projectId}/categories/${category.id}/snags`}>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
@@ -1097,7 +1075,6 @@ snagio/
 ## Key Features to Implement
 
 ### 1. Customizable Templates
-
 - Construction Snagging
 - Property Inspection
 - Quality Control
@@ -1106,7 +1083,6 @@ snagio/
 - Custom Template
 
 ### 2. Photo Features
-
 - Multiple photos per item
 - Photo annotation/markup
 - Automatic compression
@@ -1114,28 +1090,24 @@ snagio/
 - Offline photo storage
 
 ### 3. Offline Capability
-
 - Service Worker implementation
 - IndexedDB for local storage
 - Sync queue for offline changes
 - Conflict resolution
 
 ### 4. Real-time Features
-
 - Live status updates
 - Presence indicators
 - Collaborative editing
 - Activity feed
 
 ### 5. Export Options
-
 - PDF with custom headers
 - Excel export
 - Email reports
 - Batch printing
 
 ### 6. Mobile Optimizations
-
 - Touch-friendly interface
 - Camera integration
 - GPS location capture
@@ -1180,18 +1152,16 @@ GET    /api/export/:id
 ## Supabase Setup
 
 ### 1. Storage Buckets
-
 ```sql
 -- Create storage buckets
 INSERT INTO storage.buckets (id, name, public)
-VALUES
+VALUES 
   ('snag-photos', 'snag-photos', true),
   ('project-assets', 'project-assets', true),
   ('user-avatars', 'user-avatars', true);
 ```
 
 ### 2. RLS Policies
-
 ```sql
 -- Enable RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -1227,16 +1197,15 @@ CREATE POLICY "Project owners can update settings" ON project_settings
 ```
 
 ### 3. Database Functions
-
 ```sql
 -- Auto-increment snag numbers per category
 CREATE OR REPLACE FUNCTION increment_snag_number()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.number := COALESCE(
-    (SELECT MAX(number) + 1
-     FROM snags
-     WHERE category_id = NEW.category_id),
+    (SELECT MAX(number) + 1 
+     FROM snags 
+     WHERE category_id = NEW.category_id), 
     1
   );
   RETURN NEW;
@@ -1252,7 +1221,6 @@ CREATE TRIGGER set_snag_number
 ## Development Steps
 
 ### Phase 1: Core Setup (Week 1)
-
 1. Initialize Next.js project with TypeScript
 2. Set up Supabase project and authentication
 3. Configure Prisma with schema
@@ -1260,7 +1228,6 @@ CREATE TRIGGER set_snag_number
 5. Create project CRUD operations
 
 ### Phase 2: Main Features (Week 2-3)
-
 1. Implement Project → Category → Snag hierarchy
 2. Build photo upload with Supabase Storage
 3. Create customizable settings system
@@ -1268,7 +1235,6 @@ CREATE TRIGGER set_snag_number
 5. Add status management workflow
 
 ### Phase 3: Advanced Features (Week 4)
-
 1. Implement PDF export with custom headers
 2. Add real-time collaboration
 3. Build offline capability
@@ -1276,7 +1242,6 @@ CREATE TRIGGER set_snag_number
 5. Add photo annotation features
 
 ### Phase 4: Polish & Deploy (Week 5)
-
 1. Performance optimization
 2. Comprehensive testing
 3. Documentation
@@ -1293,17 +1258,17 @@ describe('Project Settings', () => {
       itemLabel: 'Issue',
       descriptionLabel: 'Problem Description',
       solutionLabel: 'Recommended Action',
-    }
-
-    const updated = await updateProjectSettings(projectId, settings)
-    expect(updated.itemLabel).toBe('Issue')
-  })
+    };
+    
+    const updated = await updateProjectSettings(projectId, settings);
+    expect(updated.itemLabel).toBe('Issue');
+  });
 
   it('should apply custom headers in PDF export', async () => {
-    const pdf = await generatePDF(project, snags)
-    expect(pdf).toContain('Problem Description')
-  })
-})
+    const pdf = await generatePDF(project, snags);
+    expect(pdf).toContain('Problem Description');
+  });
+});
 ```
 
 ## Success Criteria
@@ -1321,3 +1286,4 @@ describe('Project Settings', () => {
 3. **Customizable Headers**: All column names can be changed per project
 4. **Hierarchical Navigation**: Always maintain Project → Category → Item structure
 5. **Offline First**: Design for intermittent connectivity on construction sites
+

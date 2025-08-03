@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
-import { z } from 'zod'
 
 const createCategorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -17,7 +17,9 @@ export async function GET(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -54,7 +56,7 @@ export async function GET(
 
     // Get open/closed counts for each category
     const categoriesWithCounts = await Promise.all(
-      categories.map(async (category) => {
+      categories.map(async category => {
         const [openCount, closedCount] = await Promise.all([
           prisma.snag.count({
             where: {
@@ -83,10 +85,7 @@ export async function GET(
     return NextResponse.json(categoriesWithCounts)
   } catch (error) {
     console.error('Error fetching categories:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch categories' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
   }
 }
 
@@ -97,7 +96,9 @@ export async function POST(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -158,16 +159,10 @@ export async function POST(
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.issues },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
 
     console.error('Error creating category:', error)
-    return NextResponse.json(
-      { error: 'Failed to create category' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create category' }, { status: 500 })
   }
 }

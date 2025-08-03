@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
-import { z } from 'zod'
 
 const updateCategorySchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-F]{6}$/i)
+    .optional(),
   icon: z.string().optional(),
   orderIndex: z.number().optional(),
 })
@@ -18,7 +21,9 @@ export async function GET(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -70,10 +75,7 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error fetching category:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch category' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch category' }, { status: 500 })
   }
 }
 
@@ -84,7 +86,9 @@ export async function PUT(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -123,17 +127,11 @@ export async function PUT(
     return NextResponse.json(updatedCategory)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.issues },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
 
     console.error('Error updating category:', error)
-    return NextResponse.json(
-      { error: 'Failed to update category' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update category' }, { status: 500 })
   }
 }
 
@@ -144,7 +142,9 @@ export async function DELETE(
   try {
     const awaitedParams = await params
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -173,9 +173,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting category:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete category' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to delete category' }, { status: 500 })
   }
 }

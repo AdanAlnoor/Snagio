@@ -1,27 +1,28 @@
-import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
-import { createServerClient } from '@/lib/supabase/server'
+import { format } from 'date-fns'
+import { ArrowLeft, Calendar, Edit, MessageSquare, Trash2, User } from 'lucide-react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { SnagComments } from '@/components/snags/SnagComments'
+import { SnagDetails } from '@/components/snags/SnagDetails'
+import { SnagPhotos } from '@/components/snags/SnagPhotos'
+import { StatusHistory } from '@/components/snags/StatusHistory'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Edit, Trash2, MessageSquare, Calendar, User } from 'lucide-react'
-import { SnagPhotos } from '@/components/snags/SnagPhotos'
-import { SnagDetails } from '@/components/snags/SnagDetails'
-import { SnagComments } from '@/components/snags/SnagComments'
-import { StatusHistory } from '@/components/snags/StatusHistory'
-import { format } from 'date-fns'
+import { prisma } from '@/lib/prisma'
+import { createServerClient } from '@/lib/supabase/server'
 
 interface SnagPageProps {
-  params: {
+  params: Promise<{
     projectId: string
     categoryId: string
     snagId: string
-  }
+  }>
 }
 
 export default async function SnagPage({ params }: SnagPageProps) {
-  const supabase = createServerClient()
+  const resolvedParams = await params
+  const supabase = await createServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -33,11 +34,11 @@ export default async function SnagPage({ params }: SnagPageProps) {
   // Fetch snag with all relations
   const snag = await prisma.snag.findFirst({
     where: {
-      id: params.snagId,
-      categoryId: params.categoryId,
+      id: resolvedParams.snagId,
+      categoryId: resolvedParams.categoryId,
       category: {
         project: {
-          id: params.projectId,
+          id: resolvedParams.projectId,
           createdById: user.id,
         },
       },
@@ -113,7 +114,9 @@ export default async function SnagPage({ params }: SnagPageProps) {
       <div className="bg-card border-b">
         <div className="container mx-auto p-6">
           <div className="flex items-center gap-4 mb-4">
-            <Link href={`/projects/${params.projectId}/categories/${params.categoryId}`}>
+            <Link
+              href={`/projects/${resolvedParams.projectId}/categories/${resolvedParams.categoryId}`}
+            >
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to {snag.category.name}
@@ -128,13 +131,17 @@ export default async function SnagPage({ params }: SnagPageProps) {
               </p>
               <h1 className="text-3xl font-bold flex items-center gap-4">
                 {projectSettings.itemLabel} #{snag.number}
-                <Badge className={statusColors[snag.status as keyof typeof statusColors]}>{snag.status.replace('_', ' ')}</Badge>
+                <Badge className={statusColors[snag.status as keyof typeof statusColors]}>
+                  {snag.status.replace('_', ' ')}
+                </Badge>
                 <Badge className={priorityColors[snag.priority]}>{snag.priority}</Badge>
               </h1>
               <p className="text-lg text-muted-foreground mt-2">{snag.location}</p>
             </div>
             <div className="flex gap-3">
-              <Link href={`/projects/${params.projectId}/categories/${params.categoryId}/snags/${params.snagId}/edit`}>
+              <Link
+                href={`/projects/${resolvedParams.projectId}/categories/${resolvedParams.categoryId}/snags/${resolvedParams.snagId}/edit`}
+              >
                 <Button>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -157,7 +164,9 @@ export default async function SnagPage({ params }: SnagPageProps) {
             {/* Photos Section */}
             <Card>
               <CardHeader>
-                <CardTitle>{projectSettings.photoLabel}s ({snag.photos.length})</CardTitle>
+                <CardTitle>
+                  {projectSettings.photoLabel}s ({snag.photos.length})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <SnagPhotos photos={snag.photos} />
@@ -183,7 +192,10 @@ export default async function SnagPage({ params }: SnagPageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <SnagComments snagId={snag.id} comments={snag.comments.map(c => ({...c, createdBy: c.user}))} />
+                <SnagComments
+                  snagId={snag.id}
+                  comments={snag.comments.map(c => ({ ...c, createdBy: c.user }))}
+                />
               </CardContent>
             </Card>
           </div>
@@ -226,9 +238,7 @@ export default async function SnagPage({ params }: SnagPageProps) {
                     <p className="text-sm text-muted-foreground mb-1">Due date</p>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span className="text-sm">
-                        {format(new Date(snag.dueDate), 'PP')}
-                      </span>
+                      <span className="text-sm">{format(new Date(snag.dueDate), 'PP')}</span>
                     </div>
                   </div>
                 )}

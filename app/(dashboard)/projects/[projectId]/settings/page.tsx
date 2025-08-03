@@ -1,14 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { use, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Save } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ProjectSettings {
   itemLabel: string
@@ -65,14 +78,15 @@ const templates: ProjectTemplate[] = [
 export default function ProjectSettingsPage({
   params,
 }: {
-  params: { projectId: string }
+  params: Promise<{ projectId: string }>
 }) {
+  const { projectId } = use(params)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [project, setProject] = useState<any>(null)
-  
+
   const [settings, setSettings] = useState<ProjectSettings>({
     itemLabel: 'Snag',
     numberLabel: 'No.',
@@ -87,17 +101,17 @@ export default function ProjectSettingsPage({
 
   useEffect(() => {
     fetchProject()
-  }, [params.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [projectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProject = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/projects/${params.projectId}`)
+      const response = await fetch(`/api/projects/${projectId}`)
       if (!response.ok) throw new Error('Failed to fetch project')
-      
+
       const data = await response.json()
       setProject(data)
-      
+
       if (data.settings) {
         setSettings(data.settings)
       }
@@ -128,7 +142,7 @@ export default function ProjectSettingsPage({
     setError(null)
 
     try {
-      const response = await fetch(`/api/projects/${params.projectId}/settings`, {
+      const response = await fetch(`/api/projects/${projectId}/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +155,7 @@ export default function ProjectSettingsPage({
         throw new Error(data.error || 'Failed to save settings')
       }
 
-      router.push(`/projects/${params.projectId}/categories`)
+      router.push(`/projects/${projectId}/categories`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -159,15 +173,16 @@ export default function ProjectSettingsPage({
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <Link href="/projects" className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6">
+      <Link
+        href="/projects"
+        className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+      >
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back to projects
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {project?.name || 'Project'} Settings
-        </h1>
+        <h1 className="text-3xl font-bold mb-2">{project?.name || 'Project'} Settings</h1>
         <p className="text-gray-600">
           Customize column headers and display settings for your project
         </p>
@@ -176,13 +191,11 @@ export default function ProjectSettingsPage({
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Quick Templates</CardTitle>
-          <CardDescription>
-            Apply a template to quickly set up common use cases
-          </CardDescription>
+          <CardDescription>Apply a template to quickly set up common use cases</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {templates.map((template) => (
+            {templates.map(template => (
               <Button
                 key={template.name}
                 variant="outline"
@@ -200,9 +213,7 @@ export default function ProjectSettingsPage({
         <Card>
           <CardHeader>
             <CardTitle>Custom Labels</CardTitle>
-            <CardDescription>
-              Define how columns appear in your project
-            </CardDescription>
+            <CardDescription>Define how columns appear in your project</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -211,7 +222,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="itemLabel"
                   value={settings.itemLabel}
-                  onChange={(e) => handleChange('itemLabel', e.target.value)}
+                  onChange={e => handleChange('itemLabel', e.target.value)}
                   placeholder="e.g., Snag, Issue, Defect"
                   disabled={saving}
                 />
@@ -222,7 +233,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="numberLabel"
                   value={settings.numberLabel}
-                  onChange={(e) => handleChange('numberLabel', e.target.value)}
+                  onChange={e => handleChange('numberLabel', e.target.value)}
                   placeholder="e.g., No., ID, #"
                   disabled={saving}
                 />
@@ -233,7 +244,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="locationLabel"
                   value={settings.locationLabel}
-                  onChange={(e) => handleChange('locationLabel', e.target.value)}
+                  onChange={e => handleChange('locationLabel', e.target.value)}
                   placeholder="e.g., Location, Area, Zone"
                   disabled={saving}
                 />
@@ -244,7 +255,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="photoLabel"
                   value={settings.photoLabel}
-                  onChange={(e) => handleChange('photoLabel', e.target.value)}
+                  onChange={e => handleChange('photoLabel', e.target.value)}
                   placeholder="e.g., Photo, Image, Evidence"
                   disabled={saving}
                 />
@@ -255,7 +266,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="descriptionLabel"
                   value={settings.descriptionLabel}
-                  onChange={(e) => handleChange('descriptionLabel', e.target.value)}
+                  onChange={e => handleChange('descriptionLabel', e.target.value)}
                   placeholder="e.g., Description, Details, Findings"
                   disabled={saving}
                 />
@@ -266,7 +277,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="solutionLabel"
                   value={settings.solutionLabel}
-                  onChange={(e) => handleChange('solutionLabel', e.target.value)}
+                  onChange={e => handleChange('solutionLabel', e.target.value)}
                   placeholder="e.g., Solution, Action, Fix"
                   disabled={saving}
                 />
@@ -277,7 +288,7 @@ export default function ProjectSettingsPage({
                 <Input
                   id="statusLabel"
                   value={settings.statusLabel}
-                  onChange={(e) => handleChange('statusLabel', e.target.value)}
+                  onChange={e => handleChange('statusLabel', e.target.value)}
                   placeholder="e.g., STATUS, State, Progress"
                   disabled={saving}
                 />
@@ -291,7 +302,7 @@ export default function ProjectSettingsPage({
                   <Label htmlFor="photoSize">Photo Size in PDF</Label>
                   <Select
                     value={settings.photoSize}
-                    onValueChange={(value) => handleChange('photoSize', value)}
+                    onValueChange={value => handleChange('photoSize', value)}
                     disabled={saving}
                   >
                     <SelectTrigger id="photoSize">
@@ -309,7 +320,7 @@ export default function ProjectSettingsPage({
                   <Label htmlFor="rowsPerPage">Items per PDF Page</Label>
                   <Select
                     value={settings.rowsPerPage.toString()}
-                    onValueChange={(value) => handleChange('rowsPerPage', parseInt(value))}
+                    onValueChange={value => handleChange('rowsPerPage', parseInt(value))}
                     disabled={saving}
                   >
                     <SelectTrigger id="rowsPerPage">
@@ -326,16 +337,14 @@ export default function ProjectSettingsPage({
               </div>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </CardContent>
 
           <CardFooter className="flex justify-end gap-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/projects/${params.projectId}/categories`)}
+              onClick={() => router.push(`/projects/${projectId}/categories`)}
               disabled={saving}
             >
               Skip for now

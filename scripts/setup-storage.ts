@@ -22,14 +22,14 @@ async function setupStorage() {
   try {
     // Create the snag-photos bucket
     const { data: buckets, error: listError } = await supabase.storage.listBuckets()
-    
+
     if (listError) {
       console.error('Error listing buckets:', listError)
       return
     }
 
     const bucketExists = buckets?.some(bucket => bucket.name === 'snag-photos')
-    
+
     if (!bucketExists) {
       console.log('Creating snag-photos bucket...')
       const { error: createError } = await supabase.storage.createBucket('snag-photos', {
@@ -77,7 +77,6 @@ DELETE Policy (Delete photos):
 - Target roles: authenticated
 - USING expression: auth.uid() IS NOT NULL
 `)
-
   } catch (error) {
     console.error('Setup error:', error)
   }

@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
@@ -47,7 +54,7 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient()
-      
+
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -64,21 +71,38 @@ export default function RegisterPage() {
       if (authError) {
         setError(authError.message)
       } else if (authData.user) {
-        // Create user profile in database
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: formData.email,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            company: formData.company,
+        // Create user profile in database using API route
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: authData.user.id,
+              email: formData.email,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              company: formData.company,
+            }),
           })
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
+          const result = await response.json()
+
+          if (!response.ok) {
+            // If profile creation fails, log the error but don't block registration
+            console.error('Profile creation error:', result.error)
+            if (result.details) {
+              console.error('Details:', result.details)
+            }
+          }
+        } catch (profileError) {
+          // Log error but don't block the user from proceeding
+          console.error('Failed to create user profile:', profileError)
         }
 
+        // Redirect regardless of profile creation status
+        // The user can still log in and the profile can be created later
         router.push('/login?message=Check your email to confirm your account')
       }
     } catch (err) {
@@ -92,9 +116,7 @@ export default function RegisterPage() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Create an account</CardTitle>
-        <CardDescription>
-          Enter your details to get started with Snagio
-        </CardDescription>
+        <CardDescription>Enter your details to get started with Snagio</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -172,24 +194,15 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
           </Button>
           <div className="text-sm text-center">
             Already have an account?{' '}
-            <Link
-              href="/login"
-              className="text-orange-600 hover:underline"
-            >
+            <Link href="/login" className="text-orange-600 hover:underline">
               Sign in
             </Link>
           </div>

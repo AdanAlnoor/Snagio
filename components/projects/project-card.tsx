@@ -1,9 +1,9 @@
-import Link from 'next/link'
+import type { Project, ProjectStatus } from '@prisma/client'
 import { format } from 'date-fns'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Building, Calendar, MapPin } from 'lucide-react'
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, Building } from 'lucide-react'
-import { Project, ProjectStatus } from '@prisma/client'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface ProjectCardProps {
   project: Project & {
@@ -30,10 +30,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               <CardTitle className="text-xl">{project.name}</CardTitle>
               <p className="text-sm text-gray-500 mt-1">{project.code}</p>
             </div>
-            <Badge
-              variant="secondary"
-              className={statusColors[project.status]}
-            >
+            <Badge variant="secondary" className={statusColors[project.status]}>
               {project.status}
             </Badge>
           </div>
@@ -56,9 +53,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           </div>
         </CardContent>
         <CardFooter>
-          <p className="text-sm text-gray-500">
-            {project._count.categories} categories
-          </p>
+          <p className="text-sm text-gray-500">{project._count.categories} categories</p>
         </CardFooter>
       </Card>
     </Link>

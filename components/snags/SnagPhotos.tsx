@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Download, Maximize2 } from 'lucide-react'
+import Image from 'next/image'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 
 interface SnagPhoto {
   id: string
@@ -21,11 +21,7 @@ export function SnagPhotos({ photos }: SnagPhotosProps) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null)
 
   if (photos.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        No photos uploaded yet
-      </div>
-    )
+    return <div className="text-center py-12 text-muted-foreground">No photos uploaded yet</div>
   }
 
   const openPhoto = (index: number) => {
@@ -92,7 +88,7 @@ export function SnagPhotos({ photos }: SnagPhotosProps) {
                 <Button
                   variant="secondary"
                   size="icon"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation()
                     prevPhoto()
                   }}
@@ -104,7 +100,7 @@ export function SnagPhotos({ photos }: SnagPhotosProps) {
                 <Button
                   variant="secondary"
                   size="icon"
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation()
                     nextPhoto()
                   }}
