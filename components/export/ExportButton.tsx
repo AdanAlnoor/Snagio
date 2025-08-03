@@ -1,6 +1,6 @@
 'use client'
 
-import { Download, Loader2 } from 'lucide-react'
+import { Download, Loader2, FileDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +15,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
 
 interface ExportButtonProps {
   projectId: string
@@ -96,10 +97,15 @@ export function ExportButton({ projectId, categories = [] }: ExportButtonProps) 
           Export PDF
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="bg-white border-gray-200">
         <DialogHeader>
-          <DialogTitle>Export to PDF</DialogTitle>
-          <DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+              <FileDown className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <DialogTitle>Export to PDF</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 pl-[52px]">
             Choose what to include in your PDF export. Photos will be displayed at 70mm width for
             optimal printing.
           </DialogDescription>
@@ -137,13 +143,19 @@ export function ExportButton({ projectId, categories = [] }: ExportButtonProps) 
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={exporting}>
+        <DialogFooter className="pt-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setOpen(false)} 
+            disabled={exporting}
+            className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleExport}
             disabled={exporting || (exportScope === 'category' && !selectedCategoryId)}
+            className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 border-green-600 dark:border-green-700"
           >
             {exporting ? (
               <>

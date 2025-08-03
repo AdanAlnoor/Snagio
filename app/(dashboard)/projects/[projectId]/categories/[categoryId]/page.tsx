@@ -56,7 +56,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound()
   }
 
-  // Fetch snags with photos
+  // Fetch snags with photos and comments
   const snags = await prisma.snag.findMany({
     where: {
       categoryId: resolvedParams.categoryId,
@@ -73,6 +73,21 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           id: true,
           firstName: true,
           lastName: true,
+        },
+      },
+      comments: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 3, // Get latest 3 comments
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
         },
       },
       _count: {

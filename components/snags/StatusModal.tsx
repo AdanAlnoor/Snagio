@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Settings } from 'lucide-react'
 
 interface StatusModalProps {
   snag: {
@@ -98,19 +98,28 @@ export function StatusModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="bg-white">
         <DialogHeader>
-          <DialogTitle>Update Status - Snag #{snag.number}</DialogTitle>
-          <DialogDescription>
-            Current status:{' '}
-            <Badge
-              variant="outline"
-              className={cn('ml-2', statusColors[snag.status as keyof typeof statusColors])}
-            >
-              {snag.status.replace(/_/g, ' ')}
-            </Badge>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+              <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <DialogTitle>Update Status - Snag #{snag.number}</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 pl-[52px]">
+            Current status:
           </DialogDescription>
         </DialogHeader>
+        
+        <div className="flex items-center gap-2 pb-2">
+          <span className="text-sm text-muted-foreground">Status:</span>
+          <Badge
+            variant="outline"
+            className={cn(statusColors[snag.status as keyof typeof statusColors])}
+          >
+            {snag.status.replace(/_/g, ' ')}
+          </Badge>
+        </div>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -144,13 +153,19 @@ export function StatusModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+        <DialogFooter className="pt-6">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            disabled={loading}
+            className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!selectedStatus || !reason.trim() || loading}
+            className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 border-blue-600 dark:border-blue-700"
           >
             {loading ? (
               <>

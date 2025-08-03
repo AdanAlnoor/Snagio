@@ -293,44 +293,70 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify user owns the project and get the snag number
-    const snag = await prisma.snag.findFirst({
-      where: {
-        id: awaitedParams.snagId,
-        category: {
-          id: awaitedParams.categoryId,
-          project: {
-            id: awaitedParams.projectId,
-            createdById: user.id,
+    // Use a transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Verify user owns the project and get the snag number
+      const snag = await tx.snag.findFirst({
+        where: {
+          id: awaitedParams.snagId,
+          category: {
+            id: awaitedParams.categoryId,
+            project: {
+              id: awaitedParams.projectId,
+              createdById: user.id,
+            },
           },
         },
-      },
-      select: {
-        id: true,
-        number: true,
-      },
+        select: {
+          id: true,
+          number: true,
+          categoryId: true,
+        },
+      })
+
+      if (!snag) {
+        throw new Error('Snag not found')
+      }
+
+      // Delete the snag (cascade will handle related records)
+      await tx.snag.delete({
+        where: { id: awaitedParams.snagId },
+      })
+
+      // Get all snags with higher numbers in the same category
+      const snagsToRenumber = await tx.snag.findMany({
+        where: {
+          categoryId: snag.categoryId,
+          number: {
+            gt: snag.number,
+          },
+        },
+        orderBy: {
+          number: 'desc', // Order descending to avoid unique constraint violations
+        },
+        select: {
+          id: true,
+          number: true,
+        },
+      })
+
+      // Update each snag's number
+      for (const snagToUpdate of snagsToRenumber) {
+        await tx.snag.update({
+          where: { id: snagToUpdate.id },
+          data: { number: snagToUpdate.number - 1 },
+        })
+      }
+
+      return { success: true }
     })
 
-    if (!snag) {
-      return NextResponse.json({ error: 'Snag not found' }, { status: 404 })
-    }
-
-    // Delete snag (cascade will handle related records)
-    await prisma.snag.delete({
-      where: { id: awaitedParams.snagId },
-    })
-
-    // Renumber all snags in this category that have a higher number
-    await prisma.$executeRaw`
-      UPDATE snags 
-      SET number = number - 1 
-      WHERE category_id = ${awaitedParams.categoryId} 
-      AND number > ${snag.number}
-    `
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error deleting snag:', error)
+    if (error instanceof Error && error.message === 'Snag not found') {
+      return NextResponse.json({ error: 'Snag not found' }, { status: 404 })
+    }
     return NextResponse.json({ error: 'Failed to delete snag' }, { status: 500 })
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { SnagTable } from './SnagTable'
+import { SnagTableInline } from './SnagTableInline'
 import { StatusModal } from './StatusModal'
 import { CommentsModal } from './CommentsModal'
 
@@ -27,6 +27,19 @@ interface SnagListWrapperProps {
       firstName: string
       lastName: string
     } | null
+    comments: Array<{
+      id: string
+      content: string
+      createdAt: Date
+      user: {
+        firstName: string | null
+        lastName: string | null
+        email: string
+      }
+    }>
+    _count?: {
+      comments: number
+    }
   }>
   projectId: string
   categoryId: string
@@ -58,7 +71,7 @@ export function SnagListWrapper({
 
   return (
     <>
-      <SnagTable
+      <SnagTableInline
         snags={snags}
         projectId={projectId}
         categoryId={categoryId}

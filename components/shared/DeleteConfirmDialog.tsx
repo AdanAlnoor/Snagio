@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { cn } from '@/lib/utils'
 
 interface DeleteConfirmDialogProps {
   open: boolean
@@ -31,7 +32,7 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+      <AlertDialogContent className="bg-white border border-gray-200">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
@@ -39,7 +40,7 @@ export function DeleteConfirmDialog({
             </div>
             <AlertDialogTitle>Delete {itemType}?</AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="pt-2">
+          <AlertDialogDescription className="pt-2 pl-[52px]">
             Are you sure you want to delete {itemIdentifier ? (
               <>
                 <span className="font-medium text-gray-900 dark:text-gray-100">{itemType} #{itemIdentifier}</span>
@@ -49,7 +50,7 @@ export function DeleteConfirmDialog({
             )}? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="pt-6">
           <AlertDialogCancel 
             disabled={isDeleting}
             className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700"
@@ -59,7 +60,7 @@ export function DeleteConfirmDialog({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
-            className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+            className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 border-red-600 dark:border-red-700"
           >
             {isDeleting ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>

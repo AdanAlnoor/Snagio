@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Loader2, Send } from 'lucide-react'
+import { Loader2, Send, MessageSquare } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface Comment {
   id: string
@@ -99,9 +100,14 @@ export function CommentsModal({ snag, open, onOpenChange }: CommentsModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-white">
         <DialogHeader>
-          <DialogTitle>Comments - Snag #{snag.number}</DialogTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
+              <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <DialogTitle>Comments - Snag #{snag.number}</DialogTitle>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -123,6 +129,7 @@ export function CommentsModal({ snag, open, onOpenChange }: CommentsModalProps) 
                 onClick={handleSubmit}
                 disabled={!newComment.trim() || submitting}
                 size="sm"
+                className="bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 border-purple-600 dark:border-purple-700"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

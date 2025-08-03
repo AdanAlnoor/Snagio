@@ -71,7 +71,7 @@ export function SnagPhotos({ photos }: SnagPhotosProps) {
         open={selectedPhotoIndex !== null}
         onOpenChange={(open: boolean) => !open && setSelectedPhotoIndex(null)}
       >
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black border-gray-800">
           {selectedPhotoIndex !== null && (
             <div className="relative w-full h-full min-h-[600px] bg-black">
               <Image
