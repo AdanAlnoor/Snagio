@@ -54,33 +54,48 @@ export async function GET(
       },
     })
 
-    // Get open/closed counts for each category
-    const categoriesWithCounts = await Promise.all(
-      categories.map(async category => {
-        const [openCount, closedCount] = await Promise.all([
-          prisma.snag.count({
-            where: {
-              categoryId: category.id,
-              status: {
-                in: ['OPEN', 'IN_PROGRESS', 'PENDING_REVIEW'],
-              },
-            },
-          }),
-          prisma.snag.count({
-            where: {
-              categoryId: category.id,
-              status: 'CLOSED',
-            },
-          }),
-        ])
+    // Get all snag counts in a single query
+    const snagCounts = await prisma.snag.groupBy({
+      by: ['categoryId', 'status'],
+      where: {
+        categoryId: {
+          in: categories.map(c => c.id),
+        },
+      },
+      _count: {
+        _all: true,
+      },
+    })
 
-        return {
-          ...category,
-          openSnagCount: openCount,
-          closedSnagCount: closedCount,
+    // Create a map for quick lookup
+    const countsMap = new Map<string, { open: number; closed: number }>()
+
+    // Initialize all categories with zero counts
+    categories.forEach(cat => {
+      countsMap.set(cat.id, { open: 0, closed: 0 })
+    })
+
+    // Populate counts from the grouped query
+    snagCounts.forEach(({ categoryId, status, _count }) => {
+      const counts = countsMap.get(categoryId)
+      if (counts) {
+        if (['OPEN', 'IN_PROGRESS', 'PENDING_REVIEW'].includes(status)) {
+          counts.open += _count._all
+        } else if (status === 'CLOSED') {
+          counts.closed += _count._all
         }
-      })
-    )
+      }
+    })
+
+    // Map categories with their counts
+    const categoriesWithCounts = categories.map(category => {
+      const counts = countsMap.get(category.id) || { open: 0, closed: 0 }
+      return {
+        ...category,
+        openSnagCount: counts.open,
+        closedSnagCount: counts.closed,
+      }
+    })
 
     return NextResponse.json(categoriesWithCounts)
   } catch (error) {

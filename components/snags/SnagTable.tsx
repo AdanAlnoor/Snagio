@@ -168,13 +168,16 @@ export function SnagTable({
             <div className="w-[35%] flex-shrink-0 pr-4">
               <div className="relative group">
                 {snag.photos.length > 0 ? (
-                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border">
+                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-gray-100">
                     <Image
                       src={snag.photos[0].thumbnailUrl || snag.photos[0].url}
                       alt={`${settings.itemLabel} ${snag.number}`}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, 30vw"
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                     />
                   </div>
                 ) : (

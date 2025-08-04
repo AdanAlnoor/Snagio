@@ -1,12 +1,26 @@
 'use client'
 
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { SnagCard } from '@/components/mobile/SnagCard'
 import { useIsMobile } from '@/hooks/use-media-query'
-import { CommentsModal } from './CommentsModal'
-import { SnagTableInline } from './SnagTableInline'
-import { StatusModal } from './StatusModal'
+
+// Lazy load modals for better performance
+const CommentsModal = lazy(() =>
+  import('./CommentsModal').then(mod => ({ default: mod.CommentsModal }))
+)
+const StatusModal = lazy(() => import('./StatusModal').then(mod => ({ default: mod.StatusModal })))
+const SnagTableInline = lazy(() =>
+  import('./SnagTableInline').then(mod => ({ default: mod.SnagTableInline }))
+)
+
+// Loading spinner component
+const ModalLoader = () => (
+  <div className="flex items-center justify-center p-8">
+    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  </div>
+)
 
 interface SnagListWrapperProps {
   snags: Array<{
@@ -48,6 +62,8 @@ interface SnagListWrapperProps {
   categoryId: string
   settings: any
   teamMembers?: Array<{ id: string; firstName: string; lastName: string }>
+  totalSnags?: number
+  itemsPerPage?: number
 }
 
 export function SnagListWrapper({
@@ -102,33 +118,39 @@ export function SnagListWrapper({
             />
           ))}
         </div>
-        
+
         {/* Desktop view - hidden on mobile */}
         <div className="hidden lg:block">
-          <SnagTableInline
-            snags={snags}
-            projectId={projectId}
-            categoryId={categoryId}
-            settings={settings}
-            onStatusClick={handleStatusClick}
-            onCommentClick={handleCommentClick}
-          />
+          <Suspense fallback={<ModalLoader />}>
+            <SnagTableInline
+              snags={snags}
+              projectId={projectId}
+              categoryId={categoryId}
+              settings={settings}
+              onStatusClick={handleStatusClick}
+              onCommentClick={handleCommentClick}
+            />
+          </Suspense>
         </div>
 
         {/* Modals */}
-        <StatusModal
-          snag={selectedSnag}
-          projectId={projectId}
-          categoryId={categoryId}
-          open={statusModalOpen}
-          onOpenChange={setStatusModalOpen}
-        />
+        <Suspense fallback={<ModalLoader />}>
+          <StatusModal
+            snag={selectedSnag}
+            projectId={projectId}
+            categoryId={categoryId}
+            open={statusModalOpen}
+            onOpenChange={setStatusModalOpen}
+          />
+        </Suspense>
 
-        <CommentsModal
-          snag={selectedSnag}
-          open={commentsModalOpen}
-          onOpenChange={setCommentsModalOpen}
-        />
+        <Suspense fallback={<ModalLoader />}>
+          <CommentsModal
+            snag={selectedSnag}
+            open={commentsModalOpen}
+            onOpenChange={setCommentsModalOpen}
+          />
+        </Suspense>
       </>
     )
   }
@@ -151,30 +173,36 @@ export function SnagListWrapper({
         </div>
       ) : (
         // Desktop view - Table layout
-        <SnagTableInline
-          snags={snags}
-          projectId={projectId}
-          categoryId={categoryId}
-          settings={settings}
-          onStatusClick={handleStatusClick}
-          onCommentClick={handleCommentClick}
-        />
+        <Suspense fallback={<ModalLoader />}>
+          <SnagTableInline
+            snags={snags}
+            projectId={projectId}
+            categoryId={categoryId}
+            settings={settings}
+            onStatusClick={handleStatusClick}
+            onCommentClick={handleCommentClick}
+          />
+        </Suspense>
       )}
 
       {/* Modals */}
-      <StatusModal
-        snag={selectedSnag}
-        projectId={projectId}
-        categoryId={categoryId}
-        open={statusModalOpen}
-        onOpenChange={setStatusModalOpen}
-      />
+      <Suspense fallback={<ModalLoader />}>
+        <StatusModal
+          snag={selectedSnag}
+          projectId={projectId}
+          categoryId={categoryId}
+          open={statusModalOpen}
+          onOpenChange={setStatusModalOpen}
+        />
+      </Suspense>
 
-      <CommentsModal
-        snag={selectedSnag}
-        open={commentsModalOpen}
-        onOpenChange={setCommentsModalOpen}
-      />
+      <Suspense fallback={<ModalLoader />}>
+        <CommentsModal
+          snag={selectedSnag}
+          open={commentsModalOpen}
+          onOpenChange={setCommentsModalOpen}
+        />
+      </Suspense>
     </>
   )
 }

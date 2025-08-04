@@ -36,6 +36,31 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get query parameters for pagination and filtering
+    const searchParams = request.nextUrl.searchParams
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const status = searchParams.get('status')
+    const assignedToId = searchParams.get('assignedToId')
+
+    // Validate pagination parameters
+    const validatedPage = Math.max(1, page)
+    const validatedLimit = Math.min(100, Math.max(1, limit))
+    const skip = (validatedPage - 1) * validatedLimit
+
+    // Build where clause
+    const where: any = {
+      categoryId: awaitedParams.categoryId,
+    }
+
+    if (status) {
+      where.status = status
+    }
+
+    if (assignedToId) {
+      where.assignedToId = assignedToId
+    }
+
     // Verify user owns the project
     const category = await prisma.category.findFirst({
       where: {
@@ -51,45 +76,58 @@ export async function GET(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 })
     }
 
-    // Fetch snags
-    const snags = await prisma.snag.findMany({
-      where: {
-        categoryId: awaitedParams.categoryId,
-      },
-      include: {
-        photos: {
-          orderBy: {
-            uploadedAt: 'asc',
+    // Fetch paginated snags and total count in parallel
+    const [snags, total] = await Promise.all([
+      prisma.snag.findMany({
+        where,
+        include: {
+          photos: {
+            orderBy: {
+              uploadedAt: 'asc',
+            },
+            take: 1, // Only get first photo for list view
+          },
+          assignedTo: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+              photos: true,
+            },
           },
         },
-        assignedTo: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+        orderBy: {
+          number: 'asc',
         },
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
-      },
-      orderBy: {
-        number: 'asc',
+        skip,
+        take: validatedLimit,
+      }),
+      prisma.snag.count({ where }),
+    ])
+
+    return NextResponse.json({
+      snags,
+      pagination: {
+        page: validatedPage,
+        limit: validatedLimit,
+        total,
+        totalPages: Math.ceil(total / validatedLimit),
       },
     })
-
-    return NextResponse.json(snags)
   } catch (error) {
     console.error('Error fetching snags:', error)
     return NextResponse.json({ error: 'Failed to fetch snags' }, { status: 500 })

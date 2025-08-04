@@ -11,23 +11,21 @@ export const contentType = 'image/png'
 
 export default function Icon() {
   return new ImageResponse(
-    (
-      <div
-        style={{
-          fontSize: 24,
-          background: '#f97316',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          borderRadius: 4,
-        }}
-      >
-        S
-      </div>
-    ),
+    <div
+      style={{
+        fontSize: 24,
+        background: '#f97316',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        borderRadius: 4,
+      }}
+    >
+      S
+    </div>,
     {
       ...size,
     }

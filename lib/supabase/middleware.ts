@@ -2,11 +2,24 @@ import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
+  // Skip auth check for public routes and API routes that don't need auth
+  const publicRoutes = ['/', '/login', '/register', '/reset-password']
+  const pathname = request.nextUrl.pathname
+
+  // Check if this is a public route
+  const isPublicRoute =
+    publicRoutes.includes(pathname) || pathname.startsWith('/api/auth/') || pathname.includes('.') // Skip for files with extensions (images, css, etc)
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
+
+  // Skip auth check for public routes
+  if (isPublicRoute) {
+    return response
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,14 +54,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/register') &&
-    !request.nextUrl.pathname.startsWith('/reset-password') &&
-    request.nextUrl.pathname !== '/'
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  if (!user) {
+    // no user, redirect to login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

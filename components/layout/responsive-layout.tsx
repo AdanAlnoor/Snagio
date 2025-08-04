@@ -30,12 +30,10 @@ export function ResponsiveLayout({ user, children }: ResponsiveLayoutProps) {
         <div className="hidden lg:block">
           <DashboardNav user={user} />
         </div>
-        
+
         {/* Main content with both padding classes */}
-        <main className="pb-20 pt-0 lg:pb-0 lg:pt-16">
-          {children}
-        </main>
-        
+        <main className="pb-20 pt-0 lg:pb-0 lg:pt-16">{children}</main>
+
         {/* Show mobile nav by default, hide on desktop with CSS */}
         <div className="block lg:hidden">
           <BottomNav />

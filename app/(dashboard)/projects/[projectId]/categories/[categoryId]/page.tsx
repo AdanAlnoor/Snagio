@@ -27,86 +27,99 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound()
   }
 
-  // Fetch category with project info
-  const category = await prisma.category.findFirst({
-    where: {
-      id: resolvedParams.categoryId,
-      projectId: resolvedParams.projectId,
-    },
-    include: {
-      project: {
-        select: {
-          name: true,
-          code: true,
-          settings: true,
+  // Fetch all data in parallel for better performance
+  const ITEMS_PER_PAGE = 50
+
+  const [category, snags, totalSnags, teamMembers] = await Promise.all([
+    // Fetch category with project info
+    prisma.category.findFirst({
+      where: {
+        id: resolvedParams.categoryId,
+        projectId: resolvedParams.projectId,
+      },
+      include: {
+        project: {
+          select: {
+            name: true,
+            code: true,
+            settings: true,
+          },
+        },
+        _count: {
+          select: {
+            snags: true,
+          },
         },
       },
-      _count: {
-        select: {
-          snags: true,
+    }),
+    // Fetch snags with optimized query
+    prisma.snag.findMany({
+      where: {
+        categoryId: resolvedParams.categoryId,
+      },
+      select: {
+        id: true,
+        number: true,
+        location: true,
+        description: true,
+        solution: true,
+        status: true,
+        priority: true,
+        dueDate: true,
+        createdAt: true,
+        // Only get the first photo for the list view
+        photos: {
+          select: {
+            id: true,
+            url: true,
+            thumbnailUrl: true,
+            caption: true,
+          },
+          orderBy: {
+            uploadedAt: 'asc',
+          },
+          take: 1,
+        },
+        // Only get essential assignee info
+        assignedTo: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        // Just get the comment count, not the actual comments
+        _count: {
+          select: {
+            comments: true,
+          },
         },
       },
-    },
-  })
+      orderBy: {
+        number: 'asc',
+      },
+      take: ITEMS_PER_PAGE,
+    }),
+    // Get total count for pagination info
+    prisma.snag.count({
+      where: {
+        categoryId: resolvedParams.categoryId,
+      },
+    }),
+    // Fetch team members for filter
+    prisma.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+    }),
+  ])
 
   if (!category) {
     notFound()
   }
-
-  // Fetch snags with photos and comments
-  const snags = await prisma.snag.findMany({
-    where: {
-      categoryId: resolvedParams.categoryId,
-    },
-    include: {
-      photos: {
-        orderBy: {
-          uploadedAt: 'asc',
-        },
-        take: 1, // Get primary photo for table view
-      },
-      assignedTo: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-      comments: {
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 3, // Get latest 3 comments
-        include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          comments: true,
-        },
-      },
-    },
-    orderBy: {
-      number: 'asc',
-    },
-  })
-
-  // Fetch team members for filter
-  const teamMembers = await prisma.user.findMany({
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-    },
-    orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
-  })
 
   // Get stats
   const stats = {
@@ -139,7 +152,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                   Back
                 </Button>
               </Link>
-              
+
               <div className="flex gap-2">
                 <ExportButton
                   projectId={resolvedParams.projectId}
@@ -155,7 +168,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 </Link>
               </div>
             </div>
-            
+
             {/* Project and Category Info */}
             <div className="space-y-1">
               <div className="text-sm text-muted-foreground">
@@ -166,12 +179,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 <div className="text-sm text-muted-foreground">{category.description}</div>
               )}
             </div>
-            
+
             {/* Stats - Simplified for mobile */}
             <div className="flex items-center gap-4 text-sm">
-              <span>Total: <span className="font-semibold">{stats.total}</span></span>
-              <span>Open: <span className="font-semibold text-orange-600">{stats.open}</span></span>
-              <span>Closed: <span className="font-semibold text-green-600">{stats.closed}</span></span>
+              <span>
+                Total: <span className="font-semibold">{stats.total}</span>
+              </span>
+              <span>
+                Open: <span className="font-semibold text-orange-600">{stats.open}</span>
+              </span>
+              <span>
+                Closed: <span className="font-semibold text-green-600">{stats.closed}</span>
+              </span>
             </div>
           </div>
 
@@ -265,11 +284,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </Card>
         ) : (
           <SnagListWrapper
-            snags={snags}
+            snags={snags as any}
             projectId={resolvedParams.projectId}
             categoryId={resolvedParams.categoryId}
             settings={projectSettings}
             teamMembers={teamMembers}
+            totalSnags={totalSnags}
+            itemsPerPage={ITEMS_PER_PAGE}
           />
         )}
       </div>

@@ -1,0 +1,33 @@
+// Temporary script to create placeholder icon files to fix 404 errors
+// These should be replaced with proper PNG conversions from the SVG
+
+const fs = require('fs')
+const path = require('path')
+
+// Create a minimal 1x1 transparent PNG
+const minimalPNG = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+  0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x62, 0x00, 0x01, 0x00, 0x00,
+  0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+  0x42, 0x60, 0x82,
+])
+
+const iconsDir = path.join(__dirname, '..', 'public', 'icons')
+
+// Create placeholder icons
+const icons = ['icon-192x192.png', 'icon-512x512.png', 'new-snag.png', 'projects.png']
+
+icons.forEach(icon => {
+  const filePath = path.join(iconsDir, icon)
+  fs.writeFileSync(filePath, minimalPNG)
+  console.log(`Created placeholder: ${icon}`)
+})
+
+// Also create apple-touch-icon in public root
+const appleTouchIcon = path.join(__dirname, '..', 'public', 'apple-touch-icon.png')
+fs.writeFileSync(appleTouchIcon, minimalPNG)
+console.log('Created placeholder: apple-touch-icon.png')
+
+console.log('\nPlaceholder icons created to fix 404 errors.')
+console.log('TODO: Generate proper icons from the SVG using sharp or canvas library.')

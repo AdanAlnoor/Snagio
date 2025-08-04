@@ -132,6 +132,9 @@ model Snag {
   @@index([status])
   @@index([priority])
   @@index([assignedToId])
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([categoryId, status])
   @@map("snags")
 }
 
@@ -150,6 +153,8 @@ model SnagPhoto {
   uploadedAt      DateTime  @default(now()) @map("uploaded_at")
   
   @@index([snagId])
+  @@index([uploadedAt])
+  @@index([snagId, orderIndex])
   @@map("snag_photos")
 }
 
@@ -164,6 +169,8 @@ model Comment {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   
   @@index([snagId])
+  @@index([createdAt])
+  @@index([snagId, createdAt])
   @@map("comments")
 }
 
@@ -179,6 +186,8 @@ model StatusHistory {
   changedAt       DateTime  @default(now()) @map("changed_at")
   
   @@index([snagId])
+  @@index([changedAt])
+  @@index([snagId, changedAt])
   @@map("status_history")
 }
 
