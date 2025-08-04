@@ -15,7 +15,6 @@ import {
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useToast } from '@/hooks/use-toast'
-import { cn } from '@/lib/utils'
 
 interface ExportButtonProps {
   projectId: string
@@ -77,8 +76,7 @@ export function ExportButton({ projectId, categories = [] }: ExportButtonProps) 
       })
 
       setOpen(false)
-    } catch (error) {
-      console.error('Export error:', error)
+    } catch (_error) {
       toast({
         title: 'Export failed',
         description: 'Failed to generate PDF. Please try again.',

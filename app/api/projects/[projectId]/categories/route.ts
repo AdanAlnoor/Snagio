@@ -11,7 +11,7 @@ const createCategorySchema = z.object({
 })
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
@@ -98,8 +98,7 @@ export async function GET(
     })
 
     return NextResponse.json(categoriesWithCounts)
-  } catch (error) {
-    console.error('Error fetching categories:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
   }
 }
@@ -176,8 +175,6 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
-
-    console.error('Error creating category:', error)
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 })
   }
 }

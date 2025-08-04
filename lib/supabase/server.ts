@@ -1,4 +1,4 @@
-import { type CookieOptions, createServerClient as createSSRClient } from '@supabase/ssr'
+import { createServerClient as createSSRClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 // Cache the Supabase URL and key for better performance
@@ -18,7 +18,7 @@ export async function createServerClient() {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options)
           })
-        } catch (error) {
+        } catch (_error) {
           // The `set` method was called from a Server Component.
           // This can be ignored if you have middleware refreshing user sessions.
         }
@@ -43,7 +43,7 @@ export async function createServiceRoleClient() {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options)
           })
-        } catch (error) {
+        } catch (_error) {
           // The `set` method was called from a Server Component.
           // This can be ignored if you have middleware refreshing user sessions.
         }

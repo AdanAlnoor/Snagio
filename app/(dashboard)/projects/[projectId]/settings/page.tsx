@@ -99,10 +99,6 @@ export default function ProjectSettingsPage({
     rowsPerPage: 5,
   })
 
-  useEffect(() => {
-    fetchProject()
-  }, [projectId]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const fetchProject = async () => {
     try {
       setLoading(true)
@@ -121,6 +117,10 @@ export default function ProjectSettingsPage({
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchProject()
+  }, [projectId])
 
   const handleChange = (field: keyof ProjectSettings, value: string | number) => {
     setSettings({

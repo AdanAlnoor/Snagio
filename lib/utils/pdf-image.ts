@@ -14,8 +14,7 @@ export async function fetchImageAsBase64(url: string): Promise<string | null> {
     const mimeType = blob.type || 'image/jpeg'
 
     return `data:${mimeType};base64,${base64}`
-  } catch (error) {
-    console.error('Error fetching image:', error)
+  } catch (_error) {
     return null
   }
 }

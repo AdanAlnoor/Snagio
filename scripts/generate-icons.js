@@ -1,8 +1,8 @@
 // Script to generate PWA icons
 // Run with: node scripts/generate-icons.js
 
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 
 // Create a simple SVG icon with the Snagio "S" logo
 const svgIcon = `
@@ -20,9 +20,3 @@ if (!fs.existsSync(iconsDir)) {
 
 // Save the SVG
 fs.writeFileSync(path.join(iconsDir, 'icon.svg'), svgIcon.trim())
-
-console.log('Icon files created successfully!')
-console.log('Note: For production, you should convert the SVG to PNG files:')
-console.log('- icon-192x192.png')
-console.log('- icon-512x512.png')
-console.log('You can use tools like https://cloudconvert.com/svg-to-png or ImageMagick')

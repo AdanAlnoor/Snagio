@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
 import { CategoryCard } from '@/components/categories/CategoryCard'
 import { ExportButton } from '@/components/export/ExportButton'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Category {
   id: string
@@ -37,15 +36,11 @@ interface Project {
 
 export default function CategoriesPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params)
-  const router = useRouter()
+  const _router = useRouter()
   const [loading, setLoading] = useState(true)
   const [project, setProject] = useState<Project | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchData()
-  }, [projectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     try {
@@ -68,6 +63,10 @@ export default function CategoriesPage({ params }: { params: Promise<{ projectId
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [projectId])
 
   const getTotalStats = () => {
     const totalSnags = categories.reduce((sum, cat) => sum + cat._count.snags, 0)

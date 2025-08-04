@@ -1,15 +1,6 @@
 'use client'
 
-import {
-  ArrowLeft,
-  FolderOpen,
-  Home,
-  Package,
-  PaintBucket,
-  Shield,
-  Wrench,
-  Zap,
-} from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { use, useState } from 'react'

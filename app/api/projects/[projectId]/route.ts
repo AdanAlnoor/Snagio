@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
@@ -42,8 +42,7 @@ export async function GET(
     }
 
     return NextResponse.json(project)
-  } catch (error) {
-    console.error('Error fetching project:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 })
   }
 }
@@ -86,14 +85,13 @@ export async function PUT(
     })
 
     return NextResponse.json(updatedProject)
-  } catch (error) {
-    console.error('Error updating project:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to update project' }, { status: 500 })
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
@@ -124,8 +122,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting project:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 })
   }
 }

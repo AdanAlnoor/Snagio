@@ -10,10 +10,7 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error('Dashboard error:', error)
-  }, [error])
+  useEffect(() => {}, [])
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">

@@ -43,8 +43,7 @@ export async function GET() {
     })
 
     return NextResponse.json(projects)
-  } catch (error) {
-    console.error('Error fetching projects:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 })
   }
 }
@@ -100,8 +99,6 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
-
-    console.error('Error creating project:', error)
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })
   }
 }

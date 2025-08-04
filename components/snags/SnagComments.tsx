@@ -44,8 +44,7 @@ export function SnagComments({ snagId, comments }: SnagCommentsProps) {
 
       setNewComment('')
       router.refresh()
-    } catch (error) {
-      console.error('Error adding comment:', error)
+    } catch (_error) {
       alert('Failed to add comment')
     } finally {
       setIsSubmitting(false)

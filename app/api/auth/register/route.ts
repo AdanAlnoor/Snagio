@@ -67,8 +67,6 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       )
     }
-
-    console.error('Error creating user profile:', error)
     return NextResponse.json(
       {
         error: 'Failed to create user profile',

@@ -180,8 +180,7 @@ export function SnagTableInline({
       } else {
         throw new Error('Failed to save changes')
       }
-    } catch (error) {
-      console.error('Error saving snag:', error)
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to save changes. Please try again.',
@@ -208,7 +207,7 @@ export function SnagTableInline({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [editingId, editData])
+  }, [editingId, handleCancelEdit, handleSaveEdit])
 
   const handleDeleteClick = (snag: { id: string; number: number }) => {
     setSnagToDelete(snag)
@@ -231,10 +230,8 @@ export function SnagTableInline({
         router.refresh()
         setDeleteDialogOpen(false)
       } else {
-        console.error('Failed to delete snag')
       }
-    } catch (error) {
-      console.error('Error deleting snag:', error)
+    } catch (_error) {
     } finally {
       setDeletingId(null)
       setSnagToDelete(null)

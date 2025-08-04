@@ -110,8 +110,6 @@ export function SnagForm({
           : [],
       }
 
-      console.log('Sending snag payload:', payload)
-
       const response = await fetch(url, {
         method: snagId ? 'PUT' : 'POST',
         headers: {
@@ -122,15 +120,13 @@ export function SnagForm({
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('Snag creation failed:', errorData)
         throw new Error(errorData.error || 'Failed to save')
       }
 
-      const savedSnag = await response.json()
+      const _savedSnag = await response.json()
       router.push(`/projects/${projectId}/categories/${categoryId}`)
       router.refresh()
-    } catch (error) {
-      console.error('Error saving snag:', error)
+    } catch (_error) {
       alert('Failed to save. Please try again.')
     } finally {
       setSubmitting(false)

@@ -90,22 +90,16 @@ export default function RegisterPage() {
           const result = await response.json()
 
           if (!response.ok) {
-            // If profile creation fails, log the error but don't block registration
-            console.error('Profile creation error:', result.error)
             if (result.details) {
-              console.error('Details:', result.details)
             }
           }
-        } catch (profileError) {
-          // Log error but don't block the user from proceeding
-          console.error('Failed to create user profile:', profileError)
-        }
+        } catch (_profileError) {}
 
         // Redirect regardless of profile creation status
         // The user can still log in and the profile can be created later
         router.push('/login?message=Check your email to confirm your account')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

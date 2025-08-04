@@ -24,7 +24,6 @@ const nextConfig = {
   // Enable strict mode for better React development
   reactStrictMode: true,
   // Optimize CSS
-  swcMinify: true,
   // Enable production source maps for better debugging
   productionBrowserSourceMaps: false,
   // Optimize page loading

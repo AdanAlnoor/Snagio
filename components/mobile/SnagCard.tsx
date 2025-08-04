@@ -76,9 +76,7 @@ export function SnagCard({ snag, projectId, categoryId, onDelete, onStatusChange
       }
 
       onDelete?.()
-    } catch (error) {
-      console.error('Error deleting snag:', error)
-    }
+    } catch (_error) {}
   }
 
   return (

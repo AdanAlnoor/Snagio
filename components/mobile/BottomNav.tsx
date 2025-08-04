@@ -1,6 +1,6 @@
 'use client'
 
-import { Camera, FolderOpen, Home, Settings } from 'lucide-react'
+import { Camera, Home, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'

@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
       return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
@@ -84,8 +83,7 @@ export async function POST(request: NextRequest) {
       fileName,
       thumbnailName,
     })
-  } catch (error) {
-    console.error('Upload error:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
   }
 }

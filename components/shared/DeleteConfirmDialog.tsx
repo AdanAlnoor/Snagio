@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { cn } from '@/lib/utils'
 
 interface DeleteConfirmDialogProps {
   open: boolean
@@ -43,11 +42,9 @@ export function DeleteConfirmDialog({
           <AlertDialogDescription className="pt-2 pl-[52px]">
             Are you sure you want to delete{' '}
             {itemIdentifier ? (
-              <>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {itemType} #{itemIdentifier}
-                </span>
-              </>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {itemType} #{itemIdentifier}
+              </span>
             ) : (
               `this ${itemType}`
             )}

@@ -23,7 +23,7 @@ const updateSnagSchema = z.object({
 })
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ projectId: string; categoryId: string; snagId: string }> }
 ) {
   try {
@@ -115,8 +115,7 @@ export async function GET(
     }
 
     return NextResponse.json(snag)
-  } catch (error) {
-    console.error('Error fetching snag:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch snag' }, { status: 500 })
   }
 }
@@ -276,14 +275,12 @@ export async function PUT(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
-
-    console.error('Error updating snag:', error)
     return NextResponse.json({ error: 'Failed to update snag' }, { status: 500 })
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ projectId: string; categoryId: string; snagId: string }> }
 ) {
   try {
@@ -357,7 +354,6 @@ export async function DELETE(
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Error deleting snag:', error)
     if (error instanceof Error && error.message === 'Snag not found') {
       return NextResponse.json({ error: 'Snag not found' }, { status: 404 })
     }

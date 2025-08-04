@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 
 interface Comment {
   id: string
@@ -38,12 +37,6 @@ export function CommentsModal({ snag, open, onOpenChange }: CommentsModalProps) 
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (open && snag) {
-      fetchComments()
-    }
-  }, [open, snag])
-
   const fetchComments = async () => {
     if (!snag) return
 
@@ -54,12 +47,17 @@ export function CommentsModal({ snag, open, onOpenChange }: CommentsModalProps) 
         const data = await response.json()
         setComments(data)
       }
-    } catch (error) {
-      console.error('Error fetching comments:', error)
+    } catch (_error) {
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (open && snag) {
+      fetchComments()
+    }
+  }, [open, snag])
 
   const handleSubmit = async () => {
     if (!newComment.trim() || !snag) return
@@ -80,8 +78,7 @@ export function CommentsModal({ snag, open, onOpenChange }: CommentsModalProps) 
         setNewComment('')
         router.refresh()
       }
-    } catch (error) {
-      console.error('Error adding comment:', error)
+    } catch (_error) {
     } finally {
       setSubmitting(false)
     }

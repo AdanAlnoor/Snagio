@@ -13,13 +13,11 @@ import {
   User,
 } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,10 +107,8 @@ export function SnagTable({
         router.refresh()
         setDeleteDialogOpen(false)
       } else {
-        console.error('Failed to delete snag')
       }
-    } catch (error) {
-      console.error('Error deleting snag:', error)
+    } catch (_error) {
     } finally {
       setDeletingId(null)
       setSnagToDelete(null)

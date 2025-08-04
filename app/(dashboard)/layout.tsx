@@ -33,8 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           role: 'INSPECTOR',
         },
       })
-    } catch (error) {
-      console.error('Failed to create user profile:', error)
+    } catch (_error) {
       // If we still can't create the profile, redirect to an error page
       redirect('/login?error=profile_creation_failed')
     }

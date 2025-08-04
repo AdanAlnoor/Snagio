@@ -81,10 +81,8 @@ export function StatusModal({ snag, projectId, categoryId, open, onOpenChange }:
         setSelectedStatus('')
         setReason('')
       } else {
-        console.error('Failed to update status')
       }
-    } catch (error) {
-      console.error('Error updating status:', error)
+    } catch (_error) {
     } finally {
       setLoading(false)
     }

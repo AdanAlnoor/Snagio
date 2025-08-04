@@ -4,7 +4,6 @@ import { CheckCircle2, Clock, Edit, FolderOpen, Image, MoreVertical, Trash2 } fr
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -66,8 +65,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
       }
 
       onUpdate()
-    } catch (error) {
-      console.error('Error deleting category:', error)
+    } catch (_error) {
       alert('Failed to delete category')
     } finally {
       setDeleting(false)
@@ -84,7 +82,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg" style={{ backgroundColor: category.color + '20' }}>
+            <div className="p-2 rounded-lg" style={{ backgroundColor: `${category.color}20` }}>
               <IconComponent className="h-6 w-6" style={{ color: category.color }} />
             </div>
             <div>

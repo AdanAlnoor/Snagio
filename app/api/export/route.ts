@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       const lines = pdf.splitTextToSize(text, maxWidth)
       const linesToDraw = lines.slice(0, maxLines)
       if (lines.length > maxLines) {
-        linesToDraw[maxLines - 1] = linesToDraw[maxLines - 1].slice(0, -3) + '...'
+        linesToDraw[maxLines - 1] = `${linesToDraw[maxLines - 1].slice(0, -3)}...`
       }
       pdf.text(linesToDraw, x, y)
       return linesToDraw.length * 4 // Return height used
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     let yPosition = 25
     let pageNumber = 1
     let rowIndex = 0
-    let currentCategory = null
+    let _currentCategory = null
 
     // Use custom labels from project settings
     const labels = {
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
     for (const category of project.categories) {
       if (category.snags.length === 0) continue // Skip empty categories
 
-      currentCategory = category.name
+      _currentCategory = category.name
 
       // First category starts immediately
       if (pageNumber === 1 && yPosition === 25) {
@@ -364,8 +364,7 @@ export async function POST(request: NextRequest) {
                 align: 'center',
               })
             }
-          } catch (error) {
-            console.error('Error adding photo:', error)
+          } catch (_error) {
             setFillColor(COLORS.lightBg)
             pdf.rect(xPos + 2.5, yPosition - 2.5, COLUMNS.photo - 5, PHOTO_HEIGHT, 'F')
             pdf.setDrawColor(200, 200, 200)
@@ -486,8 +485,7 @@ export async function POST(request: NextRequest) {
       pdf: pdfOutput,
       filename: `${project.name.replace(/[^a-z0-9]/gi, '_')}_export_${new Date().toISOString().split('T')[0]}.pdf`,
     })
-  } catch (error) {
-    console.error('Export error:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 })
   }
 }

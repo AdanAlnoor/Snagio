@@ -128,8 +128,7 @@ export async function GET(
         totalPages: Math.ceil(total / validatedLimit),
       },
     })
-  } catch (error) {
-    console.error('Error fetching snags:', error)
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch snags' }, { status: 500 })
   }
 }
@@ -217,7 +216,6 @@ export async function POST(
         },
       })
     } catch (dbError) {
-      console.error('Database error creating snag:', dbError)
       throw new Error(
         `Database error: ${dbError instanceof Error ? dbError.message : 'Unknown database error'}`
       )
@@ -237,8 +235,6 @@ export async function POST(
           })),
         })
       } catch (photoError) {
-        console.error('Database error creating photos:', photoError)
-        console.error('Photo data:', photos)
         throw new Error(
           `Photo creation error: ${photoError instanceof Error ? photoError.message : 'Unknown photo error'}`
         )
@@ -284,8 +280,7 @@ export async function POST(
             reason: 'Initial creation',
           },
         })
-      } catch (statusError) {
-        console.error('Error creating status history:', statusError)
+      } catch (_statusError) {
         // Don't throw here, as the snag is already created
       }
 
@@ -303,8 +298,7 @@ export async function POST(
           reason: 'Initial creation',
         },
       })
-    } catch (statusError) {
-      console.error('Error creating status history:', statusError)
+    } catch (_statusError) {
       // Don't throw here, as the snag is already created
     }
 
@@ -313,8 +307,6 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.issues }, { status: 400 })
     }
-
-    console.error('Error creating snag:', error)
     return NextResponse.json({ error: 'Failed to create snag' }, { status: 500 })
   }
 }

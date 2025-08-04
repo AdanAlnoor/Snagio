@@ -71,8 +71,7 @@ export function PhotoUploader({
         // Clean up preview URL
         URL.revokeObjectURL(preview)
         setPreviewUrl(null)
-      } catch (error) {
-        console.error('Upload error:', error)
+      } catch (_error) {
         alert('Failed to upload photo. Please try again.')
 
         // Clean up preview URL

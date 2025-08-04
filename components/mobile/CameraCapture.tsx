@@ -98,8 +98,7 @@ export function CameraCapture({ projects }: CameraCaptureProps) {
 
       // Navigate to the new snag
       router.push(`/projects/${selectedProject}/categories/${selectedCategory}/snags/${snag.id}`)
-    } catch (error) {
-      console.error('Error:', error)
+    } catch (_error) {
       toast({
         title: 'Error',
         description: 'Failed to capture photo. Please try again.',
