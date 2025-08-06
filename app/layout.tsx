@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   title: 'Snagio - Inspection Tracking System',
   description:
     'Photo-centric inspection and issue tracking for construction, property inspections, and quality control',
-  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

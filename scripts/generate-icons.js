@@ -1,6 +1,7 @@
 // Script to generate PWA icons
 // Run with: node scripts/generate-icons.js
 
+const sharp = require('sharp')
 const fs = require('node:fs')
 const path = require('node:path')
 
@@ -20,3 +21,36 @@ if (!fs.existsSync(iconsDir)) {
 
 // Save the SVG
 fs.writeFileSync(path.join(iconsDir, 'icon.svg'), svgIcon.trim())
+
+async function generatePNGs() {
+  const svgBuffer = Buffer.from(svgIcon)
+  
+  // Generate 192x192 icon
+  await sharp(svgBuffer)
+    .resize(192, 192)
+    .png()
+    .toFile(path.join(iconsDir, 'icon-192x192.png'))
+  console.log('✓ Generated icon-192x192.png')
+  
+  // Generate 512x512 icon
+  await sharp(svgBuffer)
+    .resize(512, 512)
+    .png()
+    .toFile(path.join(iconsDir, 'icon-512x512.png'))
+  console.log('✓ Generated icon-512x512.png')
+  
+  // Generate 96x96 icons for shortcuts
+  await sharp(svgBuffer)
+    .resize(96, 96)
+    .png()
+    .toFile(path.join(iconsDir, 'new-snag.png'))
+  console.log('✓ Generated new-snag.png')
+  
+  await sharp(svgBuffer)
+    .resize(96, 96)
+    .png()
+    .toFile(path.join(iconsDir, 'projects.png'))
+  console.log('✓ Generated projects.png')
+}
+
+generatePNGs().catch(console.error)

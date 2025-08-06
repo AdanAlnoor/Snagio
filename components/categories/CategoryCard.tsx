@@ -17,7 +17,7 @@ interface CategoryCardProps {
   category: {
     id: string
     name: string
-    description?: string
+    description?: string | null
     color: string
     icon: string
     orderIndex: number
@@ -26,12 +26,11 @@ interface CategoryCardProps {
     }
     openSnagCount: number
     closedSnagCount: number
-    createdAt: string
-    updatedAt: string
+    createdAt: string | Date
+    updatedAt: string | Date
   }
   projectId: string
   itemLabel: string
-  onUpdate: () => void
 }
 
 const iconMap: { [key: string]: React.ElementType } = {
@@ -39,7 +38,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   // Add more icons as needed
 }
 
-export function CategoryCard({ category, projectId, itemLabel, onUpdate }: CategoryCardProps) {
+export function CategoryCard({ category, projectId, itemLabel }: CategoryCardProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
 
@@ -64,7 +63,7 @@ export function CategoryCard({ category, projectId, itemLabel, onUpdate }: Categ
         throw new Error('Failed to delete category')
       }
 
-      onUpdate()
+      router.refresh()
     } catch (_error) {
       alert('Failed to delete category')
     } finally {

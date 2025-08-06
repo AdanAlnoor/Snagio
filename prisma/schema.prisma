@@ -102,6 +102,7 @@ model Category {
   
   @@unique([projectId, code])
   @@index([projectId])
+  @@index([projectId, orderIndex]) // For sorted queries
   @@map("categories")
 }
 
@@ -135,6 +136,10 @@ model Snag {
   @@index([categoryId])
   @@index([createdById])
   @@index([categoryId, status])
+  @@index([categoryId, status, priority]) // Composite index for complex filtering
+  @@index([categoryId, createdAt]) // For date-based sorting
+  @@index([categoryId, assignedToId, status]) // For assignee filtering
+  @@index([categoryId, number, id]) // For cursor-based pagination
   @@map("snags")
 }
 

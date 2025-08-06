@@ -11,96 +11,123 @@ const createCategorySchema = z.object({
 })
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const awaitedParams = await params
-    const supabase = await createServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Check if middleware already verified auth
+    const userId = request.headers.get('x-user-id')
+
+    if (!userId) {
+      // Fallback to Supabase auth check if middleware didn't verify
+      const supabase = await createServerClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      return handleGetCategories(awaitedParams.projectId, user.id, request)
     }
 
-    // Verify user owns the project
-    const project = await prisma.project.findFirst({
-      where: {
-        id: awaitedParams.projectId,
-        createdById: user.id,
-      },
-    })
-
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-    }
-
-    // Fetch categories with snag counts
-    const categories = await prisma.category.findMany({
-      where: {
-        projectId: awaitedParams.projectId,
-      },
-      include: {
-        _count: {
-          select: {
-            snags: true,
-          },
-        },
-      },
-      orderBy: {
-        orderIndex: 'asc',
-      },
-    })
-
-    // Get all snag counts in a single query
-    const snagCounts = await prisma.snag.groupBy({
-      by: ['categoryId', 'status'],
-      where: {
-        categoryId: {
-          in: categories.map(c => c.id),
-        },
-      },
-      _count: {
-        _all: true,
-      },
-    })
-
-    // Create a map for quick lookup
-    const countsMap = new Map<string, { open: number; closed: number }>()
-
-    // Initialize all categories with zero counts
-    categories.forEach(cat => {
-      countsMap.set(cat.id, { open: 0, closed: 0 })
-    })
-
-    // Populate counts from the grouped query
-    snagCounts.forEach(({ categoryId, status, _count }) => {
-      const counts = countsMap.get(categoryId)
-      if (counts) {
-        if (['OPEN', 'IN_PROGRESS', 'PENDING_REVIEW'].includes(status)) {
-          counts.open += _count._all
-        } else if (status === 'CLOSED') {
-          counts.closed += _count._all
-        }
-      }
-    })
-
-    // Map categories with their counts
-    const categoriesWithCounts = categories.map(category => {
-      const counts = countsMap.get(category.id) || { open: 0, closed: 0 }
-      return {
-        ...category,
-        openSnagCount: counts.open,
-        closedSnagCount: counts.closed,
-      }
-    })
-
-    return NextResponse.json(categoriesWithCounts)
+    return handleGetCategories(awaitedParams.projectId, userId, request)
   } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
   }
+}
+
+async function handleGetCategories(projectId: string, userId: string, request: NextRequest) {
+  // Verify user owns the project
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      createdById: userId,
+    },
+  })
+
+  if (!project) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  }
+
+  // Fetch categories with snag counts
+  const categories = await prisma.category.findMany({
+    where: {
+      projectId: projectId,
+    },
+    include: {
+      _count: {
+        select: {
+          snags: true,
+        },
+      },
+    },
+    orderBy: {
+      orderIndex: 'asc',
+    },
+  })
+
+  // Get all snag counts in a single query
+  const snagCounts = await prisma.snag.groupBy({
+    by: ['categoryId', 'status'],
+    where: {
+      categoryId: {
+        in: categories.map(c => c.id),
+      },
+    },
+    _count: {
+      _all: true,
+    },
+  })
+
+  // Create a map for quick lookup
+  const countsMap = new Map<string, { open: number; closed: number }>()
+
+  // Initialize all categories with zero counts
+  categories.forEach(cat => {
+    countsMap.set(cat.id, { open: 0, closed: 0 })
+  })
+
+  // Populate counts from the grouped query
+  snagCounts.forEach(({ categoryId, status, _count }) => {
+    const counts = countsMap.get(categoryId)
+    if (counts) {
+      if (['OPEN', 'IN_PROGRESS', 'PENDING_REVIEW'].includes(status)) {
+        counts.open += _count._all
+      } else if (status === 'CLOSED') {
+        counts.closed += _count._all
+      }
+    }
+  })
+
+  // Map categories with their counts
+  const categoriesWithCounts = categories.map(category => {
+    const counts = countsMap.get(category.id) || { open: 0, closed: 0 }
+    return {
+      ...category,
+      openSnagCount: counts.open,
+      closedSnagCount: counts.closed,
+    }
+  })
+
+  // Generate ETag for caching
+  const dataHash = Buffer.from(JSON.stringify(categoriesWithCounts)).toString('base64').slice(0, 32)
+  const etag = `"${dataHash}"`
+
+  // Check if client has cached version
+  const clientEtag = request.headers.get('if-none-match')
+  if (clientEtag === etag) {
+    return new NextResponse(null, { status: 304 })
+  }
+
+  return NextResponse.json(categoriesWithCounts, {
+    headers: {
+      'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+      ETag: etag,
+    },
+  })
 }
 
 export async function POST(

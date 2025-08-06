@@ -38,18 +38,29 @@ export async function GET(
 
     // Get query parameters for pagination and filtering
     const searchParams = request.nextUrl.searchParams
-    const page = parseInt(searchParams.get('page') || '1', 10)
-    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const cursor = searchParams.get('cursor') // For cursor-based pagination
+    const page = parseInt(searchParams.get('page') || '1', 10) // Fallback for offset pagination
+    const limit = parseInt(searchParams.get('limit') || '25', 10) // Reduced default from 50
     const status = searchParams.get('status')
     const assignedToId = searchParams.get('assignedToId')
 
     // Validate pagination parameters
-    const validatedPage = Math.max(1, page)
-    const validatedLimit = Math.min(100, Math.max(1, limit))
-    const skip = (validatedPage - 1) * validatedLimit
+    const validatedLimit = Math.min(50, Math.max(1, limit)) // Max 50 items
+
+    // Use cursor-based pagination if cursor is provided
+    let skip: number | undefined
+    let cursorObj: { id: string } | undefined
+
+    if (cursor) {
+      cursorObj = { id: cursor }
+    } else {
+      // Fallback to offset pagination
+      const validatedPage = Math.max(1, page)
+      skip = (validatedPage - 1) * validatedLimit
+    }
 
     // Build where clause
-    const where: any = {
+    const where: Record<string, string> = {
       categoryId: awaitedParams.categoryId,
     }
 
@@ -110,24 +121,50 @@ export async function GET(
             },
           },
         },
-        orderBy: {
-          number: 'asc',
-        },
-        skip,
+        orderBy: [
+          { number: 'asc' },
+          { id: 'asc' }, // Secondary sort for cursor stability
+        ],
+        cursor: cursorObj,
+        skip: cursor ? 1 : skip, // Skip the cursor itself if using cursor-based pagination
         take: validatedLimit,
       }),
       prisma.snag.count({ where }),
     ])
 
-    return NextResponse.json({
-      snags,
-      pagination: {
-        page: validatedPage,
-        limit: validatedLimit,
-        total,
-        totalPages: Math.ceil(total / validatedLimit),
+    // Get the cursor for the next page
+    const nextCursor = snags.length === validatedLimit ? snags[snags.length - 1].id : null
+
+    // Generate ETag based on data content
+    const dataHash = Buffer.from(JSON.stringify({ snags, total })).toString('base64').slice(0, 32)
+    const etag = `"${dataHash}"`
+
+    // Check if client has cached version
+    const clientEtag = request.headers.get('if-none-match')
+    if (clientEtag === etag) {
+      return new NextResponse(null, { status: 304 })
+    }
+
+    return NextResponse.json(
+      {
+        snags,
+        pagination: {
+          limit: validatedLimit,
+          total,
+          totalPages: Math.ceil(total / validatedLimit),
+          nextCursor,
+          // Include page info for backward compatibility
+          page: cursor ? undefined : Math.floor((skip || 0) / validatedLimit) + 1,
+        },
       },
-    })
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+          ETag: etag,
+          'X-Total-Count': total.toString(),
+        },
+      }
+    )
   } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch snags' }, { status: 500 })
   }
@@ -178,7 +215,7 @@ export async function POST(
     const { photos, assignedToId, ...snagData } = validatedData
 
     // Create the snag
-    let snag
+    let snag: any
     try {
       snag = await prisma.snag.create({
         data: {

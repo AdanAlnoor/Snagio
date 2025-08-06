@@ -1,98 +1,119 @@
-'use client'
-
 import { ArrowLeft, CheckCircle2, Clock, FolderOpen, Image, Plus } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { use, useEffect, useState } from 'react'
+import { notFound } from 'next/navigation'
 import { CategoryCard } from '@/components/categories/CategoryCard'
 import { ExportButton } from '@/components/export/ExportButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { prisma } from '@/lib/prisma'
+import { createServerClient } from '@/lib/supabase/server'
 
-interface Category {
-  id: string
-  name: string
-  description?: string
-  color: string
-  icon: string
-  orderIndex: number
-  _count: {
-    snags: number
-  }
-  openSnagCount: number
-  closedSnagCount: number
-  createdAt: string
-  updatedAt: string
+interface CategoryPageProps {
+  params: Promise<{ projectId: string }>
 }
 
-interface Project {
-  id: string
-  name: string
-  code: string
-  settings?: {
-    itemLabel: string
-  }
-}
+export default async function CategoriesPage({ params }: CategoryPageProps) {
+  const startTime = Date.now()
 
-export default function CategoriesPage({ params }: { params: Promise<{ projectId: string }> }) {
-  const { projectId } = use(params)
-  const _router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [project, setProject] = useState<Project | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const { projectId } = await params
+  const supabase = await createServerClient()
 
-  const fetchData = async () => {
-    try {
-      setLoading(true)
+  const authStart = Date.now()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-      // Fetch project details
-      const projectResponse = await fetch(`/api/projects/${projectId}`)
-      if (!projectResponse.ok) throw new Error('Failed to fetch project')
-      const projectData = await projectResponse.json()
-      setProject(projectData)
 
-      // Fetch categories
-      const categoriesResponse = await fetch(`/api/projects/${projectId}/categories`)
-      if (!categoriesResponse.ok) throw new Error('Failed to fetch categories')
-      const categoriesData = await categoriesResponse.json()
-      setCategories(categoriesData)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
+  if (!user) {
+    notFound()
   }
 
-  useEffect(() => {
-    fetchData()
-  }, [projectId])
+  // Fetch project first to verify access
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      createdById: user.id,
+    },
+    include: {
+      settings: true,
+    },
+  })
 
-  const getTotalStats = () => {
-    const totalSnags = categories.reduce((sum, cat) => sum + cat._count.snags, 0)
-    const openSnags = categories.reduce((sum, cat) => sum + cat.openSnagCount, 0)
-    const closedSnags = categories.reduce((sum, cat) => sum + cat.closedSnagCount, 0)
-    return { totalSnags, openSnags, closedSnags }
+  if (!project) {
+    notFound()
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <p>Loading...</p>
-      </div>
-    )
-  }
+  // Fetch all data using single optimized query
+  const queryStart = Date.now()
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <p className="text-red-600">Error: {error}</p>
-      </div>
-    )
-  }
+  // Get categories with aggregated counts in a single query
+  const categoriesData = await prisma.$queryRaw<
+    Array<{
+      id: string
+      project_id: string
+      name: string
+      code: string
+      description: string | null
+      color: string
+      icon: string
+      order_index: number
+      parent_category_id: string | null
+      created_at: Date
+      updated_at: Date
+      total_count: bigint
+      open_count: bigint
+      closed_count: bigint
+    }>
+  >`
+    SELECT 
+      c.id,
+      c.project_id,
+      c.name,
+      c.code,
+      c.description,
+      c.color,
+      c.icon,
+      c.order_index,
+      c.parent_category_id,
+      c.created_at,
+      c.updated_at,
+      COALESCE(COUNT(s.id), 0)::bigint as total_count,
+      COALESCE(SUM(CASE WHEN s.status IN ('OPEN', 'IN_PROGRESS', 'PENDING_REVIEW') THEN 1 ELSE 0 END), 0)::bigint as open_count,
+      COALESCE(SUM(CASE WHEN s.status = 'CLOSED' THEN 1 ELSE 0 END), 0)::bigint as closed_count
+    FROM categories c
+    LEFT JOIN snags s ON s.category_id = c.id
+    WHERE c.project_id = ${projectId}
+    GROUP BY c.id
+    ORDER BY c.order_index ASC
+  `
 
-  const { totalSnags, openSnags, closedSnags } = getTotalStats()
-  const itemLabel = project?.settings?.itemLabel || 'Snag'
+  // Transform to the expected format
+  const categoriesWithCounts = categoriesData.map(row => ({
+    id: row.id,
+    projectId: row.project_id,
+    name: row.name,
+    code: row.code,
+    description: row.description,
+    color: row.color,
+    icon: row.icon,
+    orderIndex: row.order_index,
+    parentCategoryId: row.parent_category_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    _count: {
+      snags: Number(row.total_count),
+    },
+    openSnagCount: Number(row.open_count),
+    closedSnagCount: Number(row.closed_count),
+  }))
+
+
+  // Calculate total stats
+  const totalSnags = categoriesWithCounts.reduce((sum, cat) => sum + cat._count.snags, 0)
+  const openSnags = categoriesWithCounts.reduce((sum, cat) => sum + cat.openSnagCount, 0)
+  const closedSnags = categoriesWithCounts.reduce((sum, cat) => sum + cat.closedSnagCount, 0)
+
+  const itemLabel = project.settings?.itemLabel || 'Snag'
 
   return (
     <div className="container mx-auto p-6">
@@ -107,12 +128,12 @@ export default function CategoriesPage({ params }: { params: Promise<{ projectId
 
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold">{project?.name}</h1>
-            <p className="text-gray-600">Project Code: {project?.code}</p>
+            <h1 className="text-3xl font-bold">{project.name}</h1>
+            <p className="text-gray-600">Project Code: {project.code}</p>
           </div>
 
           <div className="flex gap-2">
-            <ExportButton projectId={projectId} categories={categories} />
+            <ExportButton projectId={projectId} categories={categoriesWithCounts} />
             <Link href={`/projects/${projectId}/categories/new`}>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -132,7 +153,7 @@ export default function CategoriesPage({ params }: { params: Promise<{ projectId
           <CardContent>
             <div className="flex items-center">
               <FolderOpen className="h-4 w-4 mr-2 text-blue-600" />
-              <span className="text-2xl font-bold">{categories.length}</span>
+              <span className="text-2xl font-bold">{categoriesWithCounts.length}</span>
             </div>
           </CardContent>
         </Card>
@@ -175,7 +196,7 @@ export default function CategoriesPage({ params }: { params: Promise<{ projectId
       </div>
 
       {/* Categories Grid */}
-      {categories.length === 0 ? (
+      {categoriesWithCounts.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <FolderOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -193,13 +214,12 @@ export default function CategoriesPage({ params }: { params: Promise<{ projectId
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map(category => (
+          {categoriesWithCounts.map(category => (
             <CategoryCard
               key={category.id}
               category={category}
               projectId={projectId}
               itemLabel={itemLabel}
-              onUpdate={fetchData}
             />
           ))}
         </div>

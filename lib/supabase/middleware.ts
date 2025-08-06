@@ -21,6 +21,12 @@ export async function updateSession(request: NextRequest) {
     return response
   }
 
+  // Skip auth check for API routes when middleware already verified
+  // This prevents double auth checks
+  if (pathname.startsWith('/api/') && request.headers.get('x-middleware-auth') === 'verified') {
+    return response
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -59,6 +65,12 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // Add auth verification header for API routes
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('x-middleware-auth', 'verified')
+    response.headers.set('x-user-id', user.id)
   }
 
   // IMPORTANT: You *must* return the response object as it is.

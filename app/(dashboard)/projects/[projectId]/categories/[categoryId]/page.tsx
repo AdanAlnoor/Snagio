@@ -1,6 +1,7 @@
-import { ArrowLeft, Camera, FileText, Plus } from 'lucide-react'
+import { ArrowLeft, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { CategoryStats } from '@/components/categories/CategoryStats'
 import { ExportButton } from '@/components/export/ExportButton'
 import { SnagListWrapper } from '@/components/snags/SnagListWrapper'
 import { Button } from '@/components/ui/button'
@@ -27,7 +28,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   // Fetch all data in parallel for better performance
-  const ITEMS_PER_PAGE = 50
+  const ITEMS_PER_PAGE = 25 // Reduced from 50 for better performance
 
   const [category, snags, totalSnags, teamMembers] = await Promise.all([
     // Fetch category with project info
@@ -94,9 +95,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           },
         },
       },
-      orderBy: {
-        number: 'asc',
-      },
+      orderBy: [
+        { number: 'asc' },
+        { id: 'asc' }, // Secondary sort for cursor stability
+      ],
       take: ITEMS_PER_PAGE,
     }),
     // Get total count for pagination info
@@ -118,14 +120,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   if (!category) {
     notFound()
-  }
-
-  // Get stats
-  const stats = {
-    total: snags.length,
-    open: snags.filter(s => ['OPEN', 'IN_PROGRESS', 'PENDING_REVIEW'].includes(s.status)).length,
-    closed: snags.filter(s => s.status === 'CLOSED').length,
-    withPhotos: snags.filter(s => s.photos.length > 0).length,
   }
 
   const projectSettings = category.project.settings || {
@@ -180,17 +174,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
 
             {/* Stats - Simplified for mobile */}
-            <div className="flex items-center gap-4 text-sm">
-              <span>
-                Total: <span className="font-semibold">{stats.total}</span>
-              </span>
-              <span>
-                Open: <span className="font-semibold text-orange-600">{stats.open}</span>
-              </span>
-              <span>
-                Closed: <span className="font-semibold text-green-600">{stats.closed}</span>
-              </span>
-            </div>
+            <CategoryStats snags={snags} />
           </div>
 
           {/* Desktop Layout - Original */}
@@ -222,24 +206,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             {/* Right side - Stats and Actions */}
             <div className="flex items-center gap-4">
               {/* Compact Stats */}
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-muted-foreground">
-                  Total: <span className="font-semibold text-foreground">{stats.total}</span>
-                </span>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-muted-foreground">
-                  Open: <span className="font-semibold text-orange-600">{stats.open}</span>
-                </span>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-muted-foreground">
-                  Closed: <span className="font-semibold text-green-600">{stats.closed}</span>
-                </span>
-                <span className="text-muted-foreground">|</span>
-                <span className="flex items-center gap-1">
-                  <Camera className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-semibold text-foreground">{stats.withPhotos}</span>
-                </span>
-              </div>
+              <CategoryStats snags={snags} />
 
               {/* Action Buttons */}
               <div className="flex gap-2">
@@ -283,7 +250,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </Card>
         ) : (
           <SnagListWrapper
-            snags={snags as any}
+            snags={snags}
             projectId={resolvedParams.projectId}
             categoryId={resolvedParams.categoryId}
             settings={projectSettings}
