@@ -1,8 +1,8 @@
 'use client'
 
-import { Camera, Loader2, Upload, X } from 'lucide-react'
+import { Camera, Image as ImageIcon, Loader2, Upload, X } from 'lucide-react'
 import Image from 'next/image'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -30,6 +30,8 @@ export function PhotoUploader({
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   // Cleanup preview URL on unmount or when it changes
   useEffect(() => {
@@ -40,12 +42,8 @@ export function PhotoUploader({
     }
   }, [previewUrl])
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return
-
-      const file = acceptedFiles[0] // Only take the first file
-
+  const handleFileUpload = useCallback(
+    async (file: File) => {
       // Create preview URL
       const preview = URL.createObjectURL(file)
       setPreviewUrl(preview)
@@ -92,6 +90,42 @@ export function PhotoUploader({
       }
     },
     [projectId, onPhotoUploaded]
+  )
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return
+      await handleFileUpload(acceptedFiles[0])
+    },
+    [handleFileUpload]
+  )
+
+  const handleCameraCapture = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (file) {
+        await handleFileUpload(file)
+      }
+      // Reset input so the same file can be selected again
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = ''
+      }
+    },
+    [handleFileUpload]
+  )
+
+  const handleGallerySelect = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (file) {
+        await handleFileUpload(file)
+      }
+      // Reset input so the same file can be selected again
+      if (galleryInputRef.current) {
+        galleryInputRef.current.value = ''
+      }
+    },
+    [handleFileUpload]
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -144,30 +178,108 @@ export function PhotoUploader({
           )}
         </div>
       ) : (
-        <div
-          {...getRootProps()}
-          className={cn(
-            'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
-            isDragActive && 'border-primary bg-primary/5',
-            uploading && 'opacity-50 cursor-not-allowed'
-          )}
-        >
-          <input {...getInputProps()} />
-
-          <div className="flex flex-col items-center gap-2">
-            {isDragActive ? (
-              <>
-                <Upload className="h-8 w-8 text-primary" />
-                <p className="text-sm font-medium">Drop photo here</p>
-              </>
-            ) : (
-              <>
-                <Camera className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">Drag & drop a photo here, or click to select</p>
-                <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP • Max 10MB</p>
-              </>
-            )}
+        <div className="space-y-4">
+          {/* Mobile-first camera/gallery buttons */}
+          <div className="flex gap-3 md:hidden">
+            <Button
+              type="button"
+              variant="default"
+              className="flex-1"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Take Photo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => galleryInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Choose from Gallery
+            </Button>
           </div>
+
+          {/* Desktop drag & drop area with integrated buttons */}
+          <div
+            {...getRootProps()}
+            className={cn(
+              'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+              isDragActive && 'border-primary bg-primary/5',
+              uploading && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            <input {...getInputProps()} />
+
+            <div className="flex flex-col items-center gap-4">
+              {isDragActive ? (
+                <>
+                  <Upload className="h-8 w-8 text-primary" />
+                  <p className="text-sm font-medium">Drop photo here</p>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm font-medium">Drag & drop a photo here</p>
+                    <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP • Max 10MB</p>
+                  </div>
+
+                  {/* Desktop camera/gallery buttons */}
+                  <div className="hidden md:flex gap-3">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        cameraInputRef.current?.click()
+                      }}
+                      disabled={uploading}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        galleryInputRef.current?.click()
+                      }}
+                      disabled={uploading}
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Browse Files
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Hidden file inputs */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleCameraCapture}
+            disabled={uploading}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleGallerySelect}
+            disabled={uploading}
+          />
         </div>
       )}
 

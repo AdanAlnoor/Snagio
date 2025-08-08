@@ -1,10 +1,10 @@
-import { ArrowLeft, CheckCircle2, Clock, FolderOpen, Image, Plus } from 'lucide-react'
+import { ArrowLeft, FolderOpen, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CategoryCard } from '@/components/categories/CategoryCard'
+import { CategoryList } from '@/components/categories/CategoryList'
 import { ExportButton } from '@/components/export/ExportButton'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
 
@@ -108,11 +108,6 @@ export default async function CategoriesPage({ params }: CategoryPageProps) {
   }))
 
 
-  // Calculate total stats
-  const totalSnags = categoriesWithCounts.reduce((sum, cat) => sum + cat._count.snags, 0)
-  const openSnags = categoriesWithCounts.reduce((sum, cat) => sum + cat.openSnagCount, 0)
-  const closedSnags = categoriesWithCounts.reduce((sum, cat) => sum + cat.closedSnagCount, 0)
-
   const itemLabel = project.settings?.itemLabel || 'Snag'
 
   return (
@@ -144,58 +139,7 @@ export default async function CategoriesPage({ params }: CategoryPageProps) {
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Categories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <FolderOpen className="h-4 w-4 mr-2 text-blue-600" />
-              <span className="text-2xl font-bold">{categoriesWithCounts.length}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total {itemLabel}s</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Image className="h-4 w-4 mr-2 text-purple-600" aria-hidden="true" />
-              <span className="text-2xl font-bold">{totalSnags}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Open {itemLabel}s</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-2 text-orange-600" />
-              <span className="text-2xl font-bold">{openSnags}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Closed {itemLabel}s</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
-              <span className="text-2xl font-bold">{closedSnags}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Categories Grid */}
+      {/* Categories List */}
       {categoriesWithCounts.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -213,16 +157,11 @@ export default async function CategoriesPage({ params }: CategoryPageProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categoriesWithCounts.map(category => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              projectId={projectId}
-              itemLabel={itemLabel}
-            />
-          ))}
-        </div>
+        <CategoryList
+          categories={categoriesWithCounts}
+          projectId={projectId}
+          itemLabel={itemLabel}
+        />
       )}
     </div>
   )

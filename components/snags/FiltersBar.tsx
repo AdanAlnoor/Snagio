@@ -276,7 +276,7 @@ export function FiltersBar({
                 Status: {option.label}
                 <button
                   onClick={() => toggleStatus(status)}
-                  className="ml-1 hover:text-destructive"
+                  className="ml-1 hover:text-destructive cursor-pointer"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -290,7 +290,7 @@ export function FiltersBar({
                 Priority: {option.label}
                 <button
                   onClick={() => togglePriority(priority)}
-                  className="ml-1 hover:text-destructive"
+                  className="ml-1 hover:text-destructive cursor-pointer"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -305,7 +305,7 @@ export function FiltersBar({
                   setSelectedAssignee(null)
                   onAssigneeChange(null)
                 }}
-                className="ml-1 hover:text-destructive"
+                className="ml-1 hover:text-destructive cursor-pointer"
               >
                 <X className="h-3 w-3" />
               </button>

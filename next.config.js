@@ -38,8 +38,12 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   // Optimize page loading
   poweredByHeader: false,
-  // Optimize webpack config
-  webpack: (config, { isServer }) => {
+}
+
+// Only apply webpack optimizations for production builds (not with Turbopack)
+// Turbopack is used in development, Webpack is used in production
+if (process.env.NODE_ENV === 'production') {
+  nextConfig.webpack = (config, { isServer }) => {
     // Optimize for production
     if (!isServer) {
       config.optimization.splitChunks = {
@@ -67,7 +71,7 @@ const nextConfig = {
       }
     }
     return config
-  },
+  }
 }
 
 module.exports = nextConfig
