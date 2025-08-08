@@ -34,6 +34,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      return NextResponse.json({ 
+        error: 'File too large', 
+        details: `File size (${(file.size / 1024 / 1024).toFixed(2)}MB) exceeds 10MB limit` 
+      }, { status: 400 })
+    }
+
+    // Log file details for debugging
+    console.log('Processing upload:', {
+      fileName: file.name,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      fileType: file.type,
+      projectId
+    })
+
     // Generate unique filename
     const fileExt = file.name.split('.').pop()
     const fileName = `${projectId}/${uuidv4()}.${fileExt}`
@@ -53,7 +70,11 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
+      console.error('Supabase storage upload error:', uploadError)
+      return NextResponse.json({ 
+        error: 'Failed to upload file', 
+        details: uploadError.message || 'Unknown storage error' 
+      }, { status: 500 })
     }
 
     // Generate thumbnail (in production, use image processing service)
@@ -83,7 +104,12 @@ export async function POST(request: NextRequest) {
       fileName,
       thumbnailName,
     })
-  } catch (_error) {
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
+  } catch (error) {
+    console.error('Upload API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ 
+      error: 'Failed to upload file', 
+      details: errorMessage 
+    }, { status: 500 })
   }
 }

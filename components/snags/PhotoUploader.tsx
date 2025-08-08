@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { compressImage, needsCompression } from '@/lib/utils/image-compression'
 
 interface Photo {
   id: string
@@ -44,6 +45,35 @@ export function PhotoUploader({
 
   const handleFileUpload = useCallback(
     async (file: File) => {
+      let fileToUpload = file
+
+      // Compress if needed (> 5MB)
+      if (needsCompression(file, 5)) {
+        console.log('File needs compression, compressing...')
+        try {
+          fileToUpload = await compressImage(file)
+        } catch (compressionError) {
+          console.error('Compression failed, trying original:', compressionError)
+          // Continue with original file if compression fails
+        }
+      }
+
+      // Check file size after compression (10MB limit)
+      const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+      if (fileToUpload.size > maxSize) {
+        const sizeMB = (fileToUpload.size / 1024 / 1024).toFixed(2)
+        alert(`File size (${sizeMB}MB) exceeds the 10MB limit even after compression. Please choose a smaller image.`)
+        return
+      }
+
+      // Log file details for debugging
+      console.log('Uploading file:', {
+        name: fileToUpload.name,
+        size: `${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`,
+        type: fileToUpload.type,
+        wasCompressed: fileToUpload !== file
+      })
+
       // Create preview URL
       const preview = URL.createObjectURL(file)
       setPreviewUrl(preview)
@@ -53,7 +83,7 @@ export function PhotoUploader({
 
       try {
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', fileToUpload)
         formData.append('projectId', projectId)
 
         const response = await fetch('/api/upload', {
@@ -62,7 +92,9 @@ export function PhotoUploader({
         })
 
         if (!response.ok) {
-          throw new Error('Upload failed')
+          const errorData = await response.json()
+          console.error('Upload failed:', errorData)
+          throw new Error(errorData.details || errorData.error || 'Upload failed')
         }
 
         const data = await response.json()
@@ -78,8 +110,10 @@ export function PhotoUploader({
         // Clean up preview URL
         URL.revokeObjectURL(preview)
         setPreviewUrl(null)
-      } catch (_error) {
-        alert('Failed to upload photo. Please try again.')
+      } catch (error) {
+        console.error('Photo upload error:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        alert(`Failed to upload photo: ${errorMessage}`)
 
         // Clean up preview URL
         URL.revokeObjectURL(preview)
