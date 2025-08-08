@@ -3,8 +3,27 @@ import { v4 as uuidv4 } from 'uuid'
 import { prisma } from '@/lib/prisma'
 import { createServerClient } from '@/lib/supabase/server'
 
+// Configure the route to handle larger file uploads
+export const runtime = 'nodejs' // Use Node.js runtime for file uploads
+export const maxDuration = 30 // Maximum function duration in seconds
+
 export async function POST(request: NextRequest) {
   try {
+    // Check content length header first
+    const contentLength = request.headers.get('content-length')
+    if (contentLength) {
+      const sizeInMB = parseInt(contentLength) / (1024 * 1024)
+      console.log(`Upload request size: ${sizeInMB.toFixed(2)}MB`)
+      
+      // Reject if over 15MB (to account for form data overhead)
+      if (sizeInMB > 15) {
+        return NextResponse.json({ 
+          error: 'Request too large', 
+          details: `Request size (${sizeInMB.toFixed(2)}MB) exceeds maximum allowed size` 
+        }, { status: 413 })
+      }
+    }
+
     const supabase = await createServerClient()
     const {
       data: { user },
@@ -14,7 +33,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const formData = await request.formData()
+    let formData: FormData
+    try {
+      formData = await request.formData()
+    } catch (formError) {
+      console.error('FormData parsing error:', formError)
+      return NextResponse.json({ 
+        error: 'Failed to parse upload data', 
+        details: 'The file may be too large or the request format is invalid' 
+      }, { status: 400 })
+    }
+
     const file = formData.get('file') as File
     const projectId = formData.get('projectId') as string
 
