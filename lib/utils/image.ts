@@ -20,6 +20,12 @@ export const getBlurDataURL = (width: number = 10, height: number = 10) => {
 export const getOptimizedImageUrl = (url: string, width?: number, quality: number = 80) => {
   if (!url) return ''
 
+  // If it's a Dropbox URL, it's already optimized (direct link)
+  if (url.includes('dropboxusercontent.com') || url.includes('dropbox.com')) {
+    // Dropbox URLs are already direct links, no transformation needed
+    return url
+  }
+
   // If it's a Supabase storage URL, we can add transform parameters
   if (url.includes('supabase.co/storage')) {
     const transformParams = []

@@ -7,6 +7,16 @@ const nextConfig = {
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'dl.dropboxusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.dropboxusercontent.com',
+        pathname: '/**',
+      },
     ],
     // Enable image optimization with modern formats
     formats: ['image/avif', 'image/webp'],

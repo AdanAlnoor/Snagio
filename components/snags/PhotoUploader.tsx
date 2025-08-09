@@ -47,8 +47,8 @@ export function PhotoUploader({
     async (file: File) => {
       let fileToUpload = file
 
-      // Compress if needed (> 5MB)
-      if (needsCompression(file, 5)) {
+      // Compress if needed (> 15MB to leave headroom for 20MB limit)
+      if (needsCompression(file, 15)) {
         console.log('File needs compression, compressing...')
         try {
           fileToUpload = await compressImage(file)
@@ -58,11 +58,11 @@ export function PhotoUploader({
         }
       }
 
-      // Check file size after compression (10MB limit)
-      const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+      // Check file size after compression (20MB limit)
+      const maxSize = 20 * 1024 * 1024 // 20MB in bytes
       if (fileToUpload.size > maxSize) {
         const sizeMB = (fileToUpload.size / 1024 / 1024).toFixed(2)
-        alert(`File size (${sizeMB}MB) exceeds the 10MB limit even after compression. Please choose a smaller image.`)
+        alert(`File size (${sizeMB}MB) exceeds the 20MB limit even after compression. Please choose a smaller image.`)
         return
       }
 
@@ -259,7 +259,7 @@ export function PhotoUploader({
                   <div className="flex flex-col items-center gap-2">
                     <Upload className="h-8 w-8 text-muted-foreground" />
                     <p className="text-sm font-medium">Drag & drop a photo here</p>
-                    <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP • Max 10MB</p>
+                    <p className="text-xs text-muted-foreground">JPEG, PNG, GIF, WebP • Max 20MB</p>
                   </div>
 
                   {/* Desktop camera/gallery buttons */}
