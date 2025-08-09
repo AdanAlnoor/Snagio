@@ -98,7 +98,11 @@ export async function POST(request: NextRequest) {
       
       console.log('Uploading to Dropbox:', {
         path: dropboxPath,
-        size: `${(file.size / 1024 / 1024).toFixed(2)}MB`
+        size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+        fileType: file.type,
+        fileName: file.name,
+        projectName: projectName,
+        timestamp: timestamp
       })
 
       try {
@@ -113,6 +117,12 @@ export async function POST(request: NextRequest) {
           buffer,
           file.type
         )
+
+        console.log('✅ Dropbox upload successful:', {
+          dropboxPath: uploadResult.path,
+          dropboxUrl: uploadResult.url,
+          fileSize: uploadResult.size
+        })
 
         // For now, use the same URL for thumbnail (in production, generate proper thumbnail)
         return NextResponse.json({
