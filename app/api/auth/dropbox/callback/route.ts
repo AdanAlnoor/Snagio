@@ -21,9 +21,10 @@ export async function GET(request: NextRequest) {
     // Exchange code for tokens
     const tokenResponse = await auth.getAccessTokenFromCode(redirectUri, code)
     
-    // Get the tokens
-    const accessToken = tokenResponse.result.access_token
-    const refreshToken = tokenResponse.result.refresh_token
+    // Get the tokens - cast to any since Dropbox types are incomplete
+    const result = tokenResponse.result as any
+    const accessToken = result.access_token
+    const refreshToken = result.refresh_token
     
     // Create an HTML page that displays the tokens
     const html = `
